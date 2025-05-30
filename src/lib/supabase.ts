@@ -106,17 +106,23 @@ export type Database = {
       votes: {
         Row: {
           book_id: string
-          user_id: string
+          voter_id: string
+          user_id: string | null
+          is_anonymous: boolean
           created_at: string
         }
         Insert: {
           book_id: string
-          user_id: string
+          voter_id: string
+          user_id?: string | null
+          is_anonymous?: boolean
           created_at?: string
         }
         Update: {
           book_id?: string
-          user_id?: string
+          voter_id?: string
+          user_id?: string | null
+          is_anonymous?: boolean
           created_at?: string
         }
       }

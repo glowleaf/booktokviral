@@ -58,7 +58,7 @@ export default function FAQPage() {
     },
     {
       question: "🗳️ How does the voting system work?",
-      answer: "Every user can vote for books they love! Votes determine the weekly rankings. The top 3 books each week get special badges (🥇🥈🥉) and massive exposure. Votes reset every Monday at midnight, so it's a fresh competition each week!"
+      answer: "Anyone can vote for books they love - no account required! We use secure cookie tracking so you can only vote once per book. Authenticated users can also vote normally. Votes determine the weekly rankings, and the top 3 books each week get special badges (🥇🥈🥉) and massive exposure. Votes reset every Monday at midnight!"
     },
     {
       question: "⭐ What does 'Get Featured' mean?",
@@ -106,7 +106,7 @@ export default function FAQPage() {
     },
     {
       question: "🎯 Who can vote for books?",
-      answer: "Anyone with an account can vote! You just need to sign in (free) and you can vote for as many books as you love. Voting helps determine which books deserve to go viral each week."
+      answer: "EVERYONE! You don't need an account to vote - just click the heart button and we'll remember your vote with secure cookies. Signed-in users can vote too. This makes it super easy for anyone to participate and help books go viral!"
     },
     {
       question: "📅 How long do featured books stay featured?",

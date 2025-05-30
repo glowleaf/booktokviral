@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 interface VoteButtonProps {
   bookId: string
@@ -13,47 +11,66 @@ export default function VoteButton({ bookId, initialVotes }: VoteButtonProps) {
   const [votes, setVotes] = useState(initialVotes)
   const [isVoting, setIsVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
-  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleVote = async () => {
-    if (isVoting) return
-
-    setIsVoting(true)
-    const supabase = createClient()
-
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      // Redirect to sign in
-      router.push('/auth/signin')
-      setIsVoting(false)
-      return
+  // Check if user has already voted when component mounts
+  useEffect(() => {
+    const checkVoteStatus = async () => {
+      try {
+        const response = await fetch(`/api/check-vote?bookId=${bookId}`)
+        const data = await response.json()
+        setHasVoted(data.hasVoted)
+      } catch (error) {
+        console.error('Error checking vote status:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    try {
-      // Try to insert vote
-      const { error } = await supabase
-        .from('votes')
-        .insert({ book_id: bookId, user_id: user.id })
+    checkVoteStatus()
+  }, [bookId])
 
-      if (error) {
-        if (error.code === '23505') {
-          // User already voted
-          setHasVoted(true)
-        } else {
-          console.error('Error voting:', error)
-        }
-      } else {
+  const handleVote = async () => {
+    if (isVoting || hasVoted) return
+
+    setIsVoting(true)
+
+    try {
+      const response = await fetch('/api/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bookId }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
         // Vote successful
-        setVotes(prev => prev + 1)
+        setVotes(data.voteCount)
         setHasVoted(true)
+      } else if (response.status === 409) {
+        // Already voted
+        setHasVoted(true)
+      } else {
+        console.error('Error voting:', data.error)
       }
     } catch (error) {
       console.error('Error voting:', error)
     }
 
     setIsVoting(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+        <span className="text-lg">❤️</span>
+        <span>{votes}</span>
+        <span className="animate-spin">⏳</span>
+      </div>
+    )
   }
 
   return (
@@ -63,12 +80,14 @@ export default function VoteButton({ bookId, initialVotes }: VoteButtonProps) {
       className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
         hasVoted
           ? 'bg-pink-100 text-pink-700 cursor-not-allowed'
-          : 'bg-gray-100 text-gray-700 hover:bg-pink-100 hover:text-pink-700'
+          : 'bg-gray-100 text-gray-700 hover:bg-pink-100 hover:text-pink-700 hover:scale-105 transform transition-all duration-200'
       }`}
+      title={hasVoted ? 'You already voted for this book' : 'Vote for this book'}
     >
-      <span className="text-lg">❤️</span>
+      <span className="text-lg">{hasVoted ? '💖' : '❤️'}</span>
       <span>{votes}</span>
       {isVoting && <span className="animate-spin">⏳</span>}
+      {hasVoted && <span className="text-xs">✓</span>}
     </button>
   )
 } 
