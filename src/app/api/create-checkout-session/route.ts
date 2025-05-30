@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { stripe, FEATURED_BOOK_PRICE } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Stripe lazily
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2025-04-30.basil',
-    })
-
     const supabase = await createServerSupabaseClient()
     
     // Check if user is authenticated
@@ -24,15 +19,16 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Book ID is required', { status: 400 })
     }
 
-    // Verify the book exists
+    // Verify the book exists and belongs to the user
     const { data: book, error: bookError } = await supabase
       .from('books')
-      .select('id, title, asin')
+      .select('*')
       .eq('id', bookId)
+      .eq('created_by', user.id)
       .single()
 
     if (bookError || !book) {
-      return new NextResponse('Book not found', { status: 404 })
+      return new NextResponse('Book not found or unauthorized', { status: 404 })
     }
 
     // Create Stripe checkout session
@@ -43,26 +39,29 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `Feature Book: ${book.title || book.asin}`,
-              description: 'Feature your book at the top of BookTok Viral for 7 days',
+              name: 'Feature Book on BookTok Viral',
+              description: `Feature "${book.title || book.asin}" at the top of the homepage for 7 days`,
+              images: book.cover_url ? [book.cover_url] : [],
             },
-            unit_amount: 999, // $9.99 in cents
+            unit_amount: FEATURED_BOOK_PRICE,
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${request.headers.get('origin')}/books/${book.asin}?featured=true`,
-      cancel_url: `${request.headers.get('origin')}/books/${book.asin}`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.asin}?featured=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.asin}?featured=cancelled`,
       metadata: {
-        book_id: bookId,
-        user_id: user.id,
+        bookId: book.id,
+        userId: user.id,
+        bookAsin: book.asin,
       },
+      customer_email: user.email,
     })
 
     return NextResponse.json({ sessionId: session.id })
   } catch (error) {
     console.error('Error creating checkout session:', error)
-    return new NextResponse('Internal server error', { status: 500 })
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 } 

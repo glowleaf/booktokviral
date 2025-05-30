@@ -11,10 +11,14 @@ interface BookPageProps {
   params: Promise<{
     asin: string
   }>
+  searchParams: Promise<{
+    featured?: string
+  }>
 }
 
-export default async function BookPage({ params }: BookPageProps) {
+export default async function BookPage({ params, searchParams }: BookPageProps) {
   const { asin } = await params
+  const { featured } = await searchParams
   const supabase = await createServerSupabaseClient()
   
   // Get book details with vote count
@@ -38,6 +42,35 @@ export default async function BookPage({ params }: BookPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Payment Status Messages */}
+        {featured === 'success' && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-green-600 text-xl mr-3">✅</div>
+              <div>
+                <h3 className="text-green-900 font-semibold">Payment Successful!</h3>
+                <p className="text-green-700 text-sm">
+                  Your book is now featured at the top of the homepage for 7 days. Thank you for supporting BookTok Viral!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {featured === 'cancelled' && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-yellow-600 text-xl mr-3">⚠️</div>
+              <div>
+                <h3 className="text-yellow-900 font-semibold">Payment Cancelled</h3>
+                <p className="text-yellow-700 text-sm">
+                  Your payment was cancelled. You can try featuring your book again anytime.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {isFeatured && (
             <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-center py-3">
@@ -112,10 +145,21 @@ export default async function BookPage({ params }: BookPageProps) {
                   <h3 className="font-semibold text-yellow-900 mb-2">
                     💎 Feature This Book
                   </h3>
-                  <p className="text-sm text-yellow-800 mb-3">
-                    Feature this book at the top of the homepage for 7 days and get more votes!
-                  </p>
-                  <FeatureButton bookId={book.id} />
+                  {isFeatured ? (
+                    <div className="text-sm text-yellow-800 mb-3">
+                      <p className="font-medium text-green-700">✅ This book is currently featured!</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Featured until: {new Date(book.featured_until!).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-yellow-800 mb-3">
+                        Feature this book at the top of the homepage for 7 days and get more votes!
+                      </p>
+                      <FeatureButton bookId={book.id} />
+                    </>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,19 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
+import { getStripe } from '@/lib/stripe'
 
 interface FeatureButtonProps {
   bookId: string
 }
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
 export default function FeatureButton({ bookId }: FeatureButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleFeature = async () => {
     setIsLoading(true)
+    setError('')
 
     try {
       const response = await fetch('/api/create-checkout-session', {
@@ -23,40 +23,53 @@ export default function FeatureButton({ bookId }: FeatureButtonProps) {
         },
         body: JSON.stringify({
           bookId,
-          priceId: 'price_feature_book', // This would be your Stripe price ID
         }),
       })
 
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Failed to create checkout session')
+      }
+
       const { sessionId } = await response.json()
       
-      const stripe = await stripePromise
+      const stripe = await getStripe()
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId })
         if (error) {
           console.error('Stripe error:', error)
+          setError('Payment failed. Please try again.')
         }
+      } else {
+        setError('Payment system unavailable. Please try again later.')
       }
     } catch (error) {
       console.error('Error creating checkout session:', error)
+      setError(error instanceof Error ? error.message : 'An error occurred')
     }
 
     setIsLoading(false)
   }
 
   return (
-    <button
-      onClick={handleFeature}
-      disabled={isLoading}
-      className="bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {isLoading ? (
-        <span className="flex items-center">
-          <span className="animate-spin mr-2">⏳</span>
-          Processing...
-        </span>
-      ) : (
-        'Feature for $9.99'
+    <div>
+      <button
+        onClick={handleFeature}
+        disabled={isLoading}
+        className="bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <span className="flex items-center">
+            <span className="animate-spin mr-2">⏳</span>
+            Processing...
+          </span>
+        ) : (
+          'Feature for $9.99'
+        )}
+      </button>
+      {error && (
+        <p className="text-red-600 text-xs mt-2">{error}</p>
       )}
-    </button>
+    </div>
   )
 } 
