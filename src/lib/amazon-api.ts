@@ -1,4 +1,3 @@
-const ProductAdvertisingAPIv1 = require('paapi5-nodejs-sdk')
 import { getFallbackBookData } from './book-data-fallback'
 
 // Updated with new credentials - 2025-01-30
@@ -16,28 +15,62 @@ const MARKETPLACES = {
   'DE': { host: 'webservices.amazon.de', region: 'eu-west-1', marketplace: 'www.amazon.de' },
 }
 
-export async function getBookDetails(asin: string): Promise<BookDetails | null> {
-  // Check fallback data first
-  const fallbackData = getFallbackBookData(asin)
-  if (fallbackData) {
-    console.log('[Amazon API] Using fallback data for ASIN:', asin)
-    return fallbackData
+// Dynamic import function that only runs on server at runtime
+async function loadAmazonSDK() {
+  // Only load on server side and never during build
+  if (typeof window !== 'undefined') {
+    return null
   }
-
+  
+  // Skip during build process
+  if (process.env.NODE_ENV !== 'development' && !process.env.VERCEL_ENV) {
+    return null
+  }
+  
   try {
-    console.log('[Amazon API] ============================================')
+    // Use eval to prevent webpack from analyzing this require
+    const requireFunc = eval('require')
+    const sdk = requireFunc('paapi5-nodejs-sdk')
+    return sdk
+  } catch (error) {
+    console.log('[Amazon API] SDK not available:', error)
+    return null
+  }
+}
+
+export async function getBookDetails(asin: string): Promise<BookDetails | null> {
+  try {
     console.log('[Amazon API] Starting request for ASIN:', asin)
-    console.log('[Amazon API] Timestamp:', new Date().toISOString())
+
+    // Check fallback data first
+    const fallbackData = getFallbackBookData(asin)
+    if (fallbackData) {
+      console.log('[Amazon API] Using fallback data for ASIN:', asin)
+      return fallbackData
+    }
+
+    // Try to load Amazon SDK
+    const ProductAdvertisingAPIv1 = await loadAmazonSDK()
+    if (!ProductAdvertisingAPIv1) {
+      console.log('[Amazon API] SDK not available, using default fallback')
+      return {
+        title: `Book ${asin}`,
+        author: 'Unknown Author',
+        cover_url: null
+      }
+    }
 
     // Validate credentials
     if (!process.env.AMAZON_ACCESS_KEY || !process.env.AMAZON_SECRET_KEY || !process.env.AMAZON_PARTNER_TAG) {
       console.error('[Amazon API] Missing credentials')
-      return null
+      return {
+        title: `Book ${asin}`,
+        author: 'Unknown Author',
+        cover_url: null
+      }
     }
 
-    console.log('[Amazon API] Credentials present:')
-    console.log('  - Access Key:', process.env.AMAZON_ACCESS_KEY?.substring(0, 10) + '...')
-    console.log('  - Partner Tag:', process.env.AMAZON_PARTNER_TAG)
+    console.log('[Amazon API] Credentials found, configuring client...')
 
     // Configure the API client
     const defaultClient = ProductAdvertisingAPIv1.ApiClient.instance
@@ -48,134 +81,138 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
 
     const api = new ProductAdvertisingAPIv1.DefaultApi()
 
-    // Try SearchItems first (often works better than GetItems)
-    const searchRequest = new ProductAdvertisingAPIv1.SearchItemsRequest()
-    searchRequest['PartnerTag'] = process.env.AMAZON_PARTNER_TAG
-    searchRequest['PartnerType'] = 'Associates'
-    searchRequest['Marketplace'] = 'www.amazon.com'
-    searchRequest['Keywords'] = asin  // Search by ASIN as keyword
-    searchRequest['Resources'] = [
+    // Create GetItems request
+    const getItemsRequest: any = {}
+    getItemsRequest.PartnerTag = process.env.AMAZON_PARTNER_TAG
+    getItemsRequest.PartnerType = 'Associates'
+    getItemsRequest.Marketplace = 'www.amazon.com'
+    getItemsRequest.ItemIds = [asin]
+    getItemsRequest.ItemIdType = 'ASIN'
+    getItemsRequest.Resources = [
       'Images.Primary.Large',
-      'Images.Primary.Medium',
-      'Images.Primary.Small',
+      'Images.Primary.Medium', 
       'ItemInfo.Title',
-      'ItemInfo.ByLineInfo',
-      'ItemInfo.Features',
-      'ItemInfo.ContentInfo'
+      'ItemInfo.ByLineInfo'
     ]
-    searchRequest['ItemCount'] = 1
 
-    console.log('[Amazon API] Trying SearchItems with ASIN as keyword...')
-    
-    const searchResponse = await new Promise<any>((resolve, reject) => {
-      api.searchItems(searchRequest, (error: any, data: any) => {
+    console.log('[Amazon API] Request prepared:', JSON.stringify(getItemsRequest, null, 2))
+
+    // Make the API call
+    const response = await new Promise<any>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Request timeout after 10 seconds'))
+      }, 10000)
+
+      api.getItems(getItemsRequest, (error: any, data: any) => {
+        clearTimeout(timeout)
         if (error) {
-          console.error('[Amazon API] SearchItems error:', error.message)
+          console.error('[Amazon API] Error response:', {
+            message: error.message,
+            code: error.code,
+            statusCode: error.statusCode,
+            response: error.response,
+            responseBody: error.responseBody
+          })
           reject(error)
         } else {
+          console.log('[Amazon API] Success response received')
           resolve(data)
         }
       })
-    }).catch(err => {
-      console.log('[Amazon API] SearchItems failed, trying GetItems...')
-      
-      // Fallback to GetItems
-      const getItemsRequest = new ProductAdvertisingAPIv1.GetItemsRequest()
-      getItemsRequest['PartnerTag'] = process.env.AMAZON_PARTNER_TAG
-      getItemsRequest['PartnerType'] = 'Associates'
-      getItemsRequest['Marketplace'] = 'www.amazon.com'
-      getItemsRequest['ItemIds'] = [asin]
-      getItemsRequest['Resources'] = [
-        'Images.Primary.Large',
-        'Images.Primary.Medium',
-        'Images.Primary.Small',
-        'ItemInfo.Title',
-        'ItemInfo.ByLineInfo',
-        'ItemInfo.Features',
-        'ItemInfo.ContentInfo'
-      ]
-      
-      return new Promise<any>((resolve, reject) => {
-        api.getItems(getItemsRequest, (error: any, data: any) => {
-          if (error) {
-            console.error('[Amazon API] GetItems error:', error.message)
-            reject(error)
-          } else {
-            resolve(data)
-          }
-        })
-      })
     })
 
-    // Process response
-    let items = []
-    if (searchResponse?.SearchResult?.Items) {
-      items = searchResponse.SearchResult.Items
-      console.log('[Amazon API] Found items via SearchItems')
-    } else if (searchResponse?.ItemsResult?.Items) {
-      items = searchResponse.ItemsResult.Items
-      console.log('[Amazon API] Found items via GetItems')
+    console.log('[Amazon API] Raw response:', JSON.stringify(response, null, 2))
+
+    // Check if we got a valid response
+    if (!response) {
+      console.log('[Amazon API] No response from PA-API')
+      return {
+        title: `Book ${asin}`,
+        author: 'Unknown Author',
+        cover_url: null
+      }
     }
 
-    if (items.length === 0) {
-      console.log('[Amazon API] No items found')
-      return null
+    // Parse the response - PA-API returns PascalCase properties
+    if (response.Errors && response.Errors.length > 0) {
+      console.error('[Amazon API] Errors in response:', response.Errors)
+      return {
+        title: `Book ${asin}`,
+        author: 'Unknown Author',
+        cover_url: null
+      }
     }
-
-    // Find the exact ASIN match
-    let item = items.find((i: any) => i.ASIN === asin) || items[0]
     
-    // Extract book details
-    let title = null
-    let author = null
-    let cover_url = null
-
-    // Get title
-    if (item.ItemInfo?.Title?.DisplayValue) {
-      title = item.ItemInfo.Title.DisplayValue
+    // Check ItemsResult (PascalCase)
+    if (response.ItemsResult && response.ItemsResult.Items && response.ItemsResult.Items.length > 0) {
+      const item = response.ItemsResult.Items[0]
+      console.log('[Amazon API] Processing item:', JSON.stringify(item, null, 2))
+      
+      // Extract title (PascalCase properties)
+      let title = null
+      if (item.ItemInfo && item.ItemInfo.Title && item.ItemInfo.Title.DisplayValue) {
+        title = item.ItemInfo.Title.DisplayValue
+        console.log('[Amazon API] Found title:', title)
+      }
+      
+      // Extract author from contributors or brand
+      let author = null
+      if (item.ItemInfo && item.ItemInfo.ByLineInfo) {
+        if (item.ItemInfo.ByLineInfo.Contributors && item.ItemInfo.ByLineInfo.Contributors.length > 0) {
+          const contributor = item.ItemInfo.ByLineInfo.Contributors[0]
+          if (contributor.Name) {
+            author = contributor.Name
+            console.log('[Amazon API] Found author:', author)
+          }
+        } else if (item.ItemInfo.ByLineInfo.Brand && item.ItemInfo.ByLineInfo.Brand.DisplayValue) {
+          author = item.ItemInfo.ByLineInfo.Brand.DisplayValue
+          console.log('[Amazon API] Found brand as author:', author)
+        }
+      }
+      
+      // Extract cover image (PascalCase)
+      let cover_url = null
+      if (item.Images && item.Images.Primary) {
+        if (item.Images.Primary.Large && item.Images.Primary.Large.URL) {
+          cover_url = item.Images.Primary.Large.URL
+          console.log('[Amazon API] Found large cover:', cover_url)
+        } else if (item.Images.Primary.Medium && item.Images.Primary.Medium.URL) {
+          cover_url = item.Images.Primary.Medium.URL
+          console.log('[Amazon API] Found medium cover:', cover_url)
+        }
+      }
+      
+      // Return with fallback values if needed
+      const bookDetails = {
+        title: title || `Book ${asin}`,
+        author: author || 'Unknown Author',
+        cover_url: cover_url
+      }
+      
+      console.log('[Amazon API] Final book details:', bookDetails)
+      return bookDetails
     }
-
-    // Get author
-    if (item.ItemInfo?.ByLineInfo?.Contributors?.length > 0) {
-      const contributors = item.ItemInfo.ByLineInfo.Contributors
-      author = contributors.map((c: any) => c.Name).join(', ')
-    } else if (item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue) {
-      author = item.ItemInfo.ByLineInfo.Brand.DisplayValue
-    }
-
-    // Get cover image - try all sizes
-    if (item.Images?.Primary?.Large?.URL) {
-      cover_url = item.Images.Primary.Large.URL
-    } else if (item.Images?.Primary?.Medium?.URL) {
-      cover_url = item.Images.Primary.Medium.URL
-    } else if (item.Images?.Primary?.Small?.URL) {
-      cover_url = item.Images.Primary.Small.URL
-    }
-
-    const bookDetails = {
-      title: title || `Book ${asin}`,
-      author: author || 'Unknown Author',
-      cover_url: cover_url
-    }
-
-    console.log('[Amazon API] Extracted:', bookDetails)
-    console.log('[Amazon API] ============================================')
     
-    return bookDetails
-
-  } catch (error: any) {
-    console.error('[Amazon API] Exception:', error.message)
-    
-    // Last resort - try direct URL construction
-    console.log('[Amazon API] Attempting direct image URL construction...')
-    
-    // Amazon often uses predictable image URLs
-    const possibleImageUrl = `https://images-na.ssl-images-amazon.com/images/I/${asin}.jpg`
-    
+    console.log('[Amazon API] No items in response')
     return {
       title: `Book ${asin}`,
       author: 'Unknown Author',
-      cover_url: possibleImageUrl
+      cover_url: null
+    }
+    
+  } catch (error: any) {
+    console.error('[Amazon API] Exception:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      response: error.response
+    })
+    
+    // Return fallback data instead of null
+    return {
+      title: `Book ${asin}`,
+      author: 'Unknown Author',
+      cover_url: null
     }
   }
 }

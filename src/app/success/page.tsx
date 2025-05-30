@@ -228,7 +228,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
                   ⚡ FEATURE NOW OR REGRET FOREVER ⚡
                 </span>
               </div>
-          </div>
+            </div>
 
             {/* CTA BUTTONS */}
             <div className="text-center space-y-6">
@@ -237,7 +237,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
                   <FeatureButton bookId={bookId} />
                 </div>
               ) : (
-          <div className="space-y-4">
+                <div className="space-y-4">
                   <div className="bg-yellow-100 border-2 border-yellow-400 rounded-xl p-4">
                     <p className="text-yellow-800 font-semibold">
                       🔐 Please sign in to feature your book!
@@ -257,25 +257,25 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Link
-                href="/submit"
-                className="bg-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-700 transition-colors"
-              >
-                Submit Another Book
-              </Link>
-              <Link
-                href="/weekly"
-                className="bg-white text-pink-600 border-2 border-pink-600 px-6 py-3 rounded-lg font-semibold hover:bg-pink-50 transition-colors"
-              >
+                <Link
+                  href="/submit"
+                  className="bg-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-700 transition-colors"
+                >
+                  Submit Another Book
+                </Link>
+                <Link
+                  href="/weekly"
+                  className="bg-white text-pink-600 border-2 border-pink-600 px-6 py-3 rounded-lg font-semibold hover:bg-pink-50 transition-colors"
+                >
                   View Leaderboard
-              </Link>
-            <Link
-              href="/"
+                </Link>
+                <Link
+                  href="/"
                   className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-            >
+                >
                   Back to Homepage
-            </Link>
-          </div>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
