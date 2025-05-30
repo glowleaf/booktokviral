@@ -105,6 +105,10 @@ export default function FAQPage() {
       answer: "YES! BookTok Viral is for ALL book lovers, not just authors! If you've read an amazing book and want to help it go viral, absolutely submit it. Share your TikTok review, get people voting, and help spread the BookTok love! The best book recommendations often come from passionate readers."
     },
     {
+      question: "📖 I have many books, can I submit them all at once?",
+      answer: "Yes, you can submit multiple books! But here's a pro tip: you might want to hold out on the following week and spread them out over time. This gives each book its moment to shine, prevents vote splitting between your own books, and keeps you consistently visible in the community. Strategic timing = better viral potential! 🚀"
+    },
+    {
       question: "💡 What makes a book go viral on BookTok?",
       answer: "Great TikTok videos, engaging book covers, compelling stories, and community voting! Books with TikTok links perform way better. The more people vote for your book, the higher it ranks!"
     },
