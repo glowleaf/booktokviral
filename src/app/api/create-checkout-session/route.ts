@@ -4,6 +4,12 @@ import { stripe, FEATURED_BOOK_PRICE } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      console.error('Stripe not initialized - missing environment variables')
+      return new NextResponse('Payment system unavailable', { status: 503 })
+    }
+
     const supabase = await createServerSupabaseClient()
     
     // Check if user is authenticated

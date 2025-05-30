@@ -28,20 +28,24 @@ export default function FeatureButton({ bookId }: FeatureButtonProps) {
 
       if (!response.ok) {
         const errorText = await response.text()
+        if (response.status === 503) {
+          throw new Error('Payment system is currently unavailable. Please try again later.')
+        }
         throw new Error(errorText || 'Failed to create checkout session')
       }
 
       const { sessionId } = await response.json()
       
       const stripe = await getStripe()
-      if (stripe) {
-        const { error } = await stripe.redirectToCheckout({ sessionId })
-        if (error) {
-          console.error('Stripe error:', error)
-          setError('Payment failed. Please try again.')
-        }
-      } else {
-        setError('Payment system unavailable. Please try again later.')
+      if (!stripe) {
+        setError('Payment system is currently unavailable. Please try again later.')
+        return
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId })
+      if (error) {
+        console.error('Stripe error:', error)
+        setError('Payment failed. Please try again.')
       }
     } catch (error) {
       console.error('Error creating checkout session:', error)

@@ -4,6 +4,12 @@ import { stripe, FEATURED_BOOK_DURATION_DAYS } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      console.error('Stripe not initialized - missing environment variables')
+      return new NextResponse('Payment system unavailable', { status: 503 })
+    }
+
     const body = await request.text()
     const signature = request.headers.get('stripe-signature')
 
@@ -11,11 +17,17 @@ export async function POST(request: NextRequest) {
       return new NextResponse('No signature', { status: 400 })
     }
 
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+    if (!webhookSecret) {
+      console.error('Stripe webhook secret not configured')
+      return new NextResponse('Webhook not configured', { status: 503 })
+    }
+
     // Verify webhook signature
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     )
 
     if (event.type === 'checkout.session.completed') {
