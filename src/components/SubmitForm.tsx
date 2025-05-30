@@ -3,13 +3,66 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+type AuthMode = 'signin' | 'signup' | 'magic'
+
 export default function SubmitForm() {
-  const [asin, setAsin] = useState('')
+  const [asinInput, setAsinInput] = useState('')
   const [tiktokUrl, setTiktokUrl] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [extractedAsin, setExtractedAsin] = useState('')
   const router = useRouter()
+
+  const extractASINFromURL = (input: string): string | null => {
+    // Remove whitespace
+    const cleanInput = input.trim()
+    
+    // If it's already a 10-character ASIN, return it
+    if (/^[A-Z0-9]{10}$/i.test(cleanInput)) {
+      return cleanInput.toUpperCase()
+    }
+    
+    // Extract ASIN from various Amazon URL formats
+    const asinPatterns = [
+      // Standard product URLs: /dp/ASIN or /gp/product/ASIN
+      /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i,
+      // ASIN in query parameters
+      /[?&]ASIN=([A-Z0-9]{10})/i,
+      // Product ID in various formats
+      /\/product\/([A-Z0-9]{10})/i,
+      // Direct ASIN pattern
+      /([A-Z0-9]{10})/i
+    ]
+    
+    for (const pattern of asinPatterns) {
+      const match = cleanInput.match(pattern)
+      if (match && match[1]) {
+        return match[1].toUpperCase()
+      }
+    }
+    
+    return null
+  }
+
+  const handleInputChange = (value: string) => {
+    setAsinInput(value)
+    setError('')
+    
+    if (value.trim()) {
+      const asin = extractASINFromURL(value)
+      if (asin) {
+        setExtractedAsin(asin)
+      } else {
+        setExtractedAsin('')
+        if (value.includes('amazon.') || value.includes('amzn.')) {
+          setError('Could not extract ASIN from this Amazon URL. Please check the link or enter the ASIN directly.')
+        }
+      }
+    } else {
+      setExtractedAsin('')
+    }
+  }
 
   const validateASIN = (asin: string) => {
     // ASIN is typically 10 characters, alphanumeric
@@ -21,13 +74,15 @@ export default function SubmitForm() {
     e.preventDefault()
     setError('')
 
-    if (!asin.trim()) {
-      setError('Please enter an Amazon ASIN')
+    const finalAsin = extractedAsin || asinInput.trim()
+
+    if (!finalAsin) {
+      setError('Please enter an Amazon ASIN or Amazon product URL')
       return
     }
 
-    if (!validateASIN(asin)) {
-      setError('Please enter a valid 10-character Amazon ASIN')
+    if (!validateASIN(finalAsin)) {
+      setError('Please enter a valid Amazon URL or 10-character ASIN')
       return
     }
 
@@ -40,7 +95,7 @@ export default function SubmitForm() {
 
     try {
       const formData = new FormData()
-      formData.append('asin', asin.toUpperCase())
+      formData.append('asin', finalAsin.toUpperCase())
       if (tiktokUrl.trim()) {
         formData.append('tiktok_url', tiktokUrl.trim())
       }
@@ -73,21 +128,27 @@ export default function SubmitForm() {
 
       <div>
         <label htmlFor="asin" className="block text-sm font-medium text-gray-700 mb-2">
-          Amazon ASIN *
+          Amazon Product URL or ASIN *
         </label>
         <input
           type="text"
           id="asin"
-          value={asin}
-          onChange={(e) => setAsin(e.target.value)}
-          placeholder="e.g., B08XYZ1234"
+          value={asinInput}
+          onChange={(e) => handleInputChange(e.target.value)}
+          placeholder="https://www.amazon.com/dp/B08XYZ1234 or B08XYZ1234"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-          maxLength={10}
           required
         />
         <p className="text-xs text-gray-500 mt-1">
-          10-character code from Amazon book page
+          Paste the full Amazon product URL or enter the 10-character ASIN directly
         </p>
+        
+        {extractedAsin && (
+          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
+            <span className="text-green-700">✓ ASIN detected: </span>
+            <span className="font-mono font-semibold text-green-800">{extractedAsin}</span>
+          </div>
+        )}
       </div>
 
       <div>
