@@ -59,6 +59,44 @@ export type Database = {
           created_at?: string
         }
       }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          book_id: string
+          stripe_subscription_id: string
+          stripe_customer_id: string
+          status: 'active' | 'canceled' | 'past_due' | 'incomplete'
+          current_period_start: string
+          current_period_end: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          book_id: string
+          stripe_subscription_id: string
+          stripe_customer_id: string
+          status: 'active' | 'canceled' | 'past_due' | 'incomplete'
+          current_period_start: string
+          current_period_end: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          book_id?: string
+          stripe_subscription_id?: string
+          stripe_customer_id?: string
+          status?: 'active' | 'canceled' | 'past_due' | 'incomplete'
+          current_period_start?: string
+          current_period_end?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       votes: {
         Row: {
           book_id: string

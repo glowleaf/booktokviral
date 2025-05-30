@@ -43,10 +43,20 @@ export default async function SubmitPage() {
           <div className="mt-6 p-4 bg-pink-50 rounded-lg">
             <h3 className="font-semibold text-pink-900 mb-2">💎 Want to feature your book?</h3>
             <p className="text-sm text-pink-800 mb-3">
-              After submitting your book, you can feature it at the top of the homepage for 7 days to get more visibility and votes!
+              After submitting your book, you can feature it at the top of the homepage to get more visibility and votes!
             </p>
-            <p className="text-xs text-pink-700">
-              Visit your book&apos;s page after submission to purchase featuring for $9.99
+            <div className="space-y-2 text-xs text-pink-700">
+              <div className="flex items-center justify-between bg-white p-2 rounded">
+                <span><strong>One-time Feature:</strong> $9.99 for 7 days</span>
+                <span className="text-yellow-600">⭐</span>
+              </div>
+              <div className="flex items-center justify-between bg-white p-2 rounded">
+                <span><strong>Weekly Subscription:</strong> $19.99/month</span>
+                <span className="text-purple-600">🔄</span>
+              </div>
+            </div>
+            <p className="text-xs text-pink-700 mt-2">
+              Visit your book&apos;s page after submission to choose your featuring option
             </p>
           </div>
         </div>

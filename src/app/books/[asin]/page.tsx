@@ -13,12 +13,13 @@ interface BookPageProps {
   }>
   searchParams: Promise<{
     featured?: string
+    subscription?: string
   }>
 }
 
 export default async function BookPage({ params, searchParams }: BookPageProps) {
   const { asin } = await params
-  const { featured } = await searchParams
+  const { featured, subscription } = await searchParams
   const supabase = await createServerSupabaseClient()
   
   // Get book details with vote count
@@ -65,6 +66,35 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                 <h3 className="text-yellow-900 font-semibold">Payment Cancelled</h3>
                 <p className="text-yellow-700 text-sm">
                   Your payment was cancelled. You can try featuring your book again anytime.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Subscription Status Messages */}
+        {subscription === 'success' && (
+          <div className="mb-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-purple-600 text-xl mr-3">🎉</div>
+              <div>
+                <h3 className="text-purple-900 font-semibold">Subscription Activated!</h3>
+                <p className="text-purple-700 text-sm">
+                  Your weekly featured book subscription is now active. Your book will be automatically featured every week!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {subscription === 'cancelled' && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-yellow-600 text-xl mr-3">⚠️</div>
+              <div>
+                <h3 className="text-yellow-900 font-semibold">Subscription Cancelled</h3>
+                <p className="text-yellow-700 text-sm">
+                  Your subscription setup was cancelled. You can try again anytime or choose the one-time feature option.
                 </p>
               </div>
             </div>
