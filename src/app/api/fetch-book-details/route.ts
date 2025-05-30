@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Fetching book details for ASIN:', asin)
 
-    // Try Amazon Product Advertising API first
+    // Try Amazon Product Advertising API
     const amazonDetails = await getBookDetails(asin)
     
     if (amazonDetails) {
@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(amazonDetails)
     }
 
-    // Fallback: Generate basic info
-    console.log('Amazon PA-API failed, using fallback for ASIN:', asin)
+    // If PA-API returns null, use fallback
+    console.log('Amazon PA-API returned null, using fallback for ASIN:', asin)
     return NextResponse.json({
       title: `Book ${asin}`,
       author: 'Unknown Author',
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const { data: books, error } = await supabase
       .from('books')
       .select('*')
-      .or('title.is.null,cover_url.is.null,title.eq.Book ' + 'B%')
+      .or('title.is.null,cover_url.is.null,title.like.Book %')
       .limit(10) // Process 10 at a time
     
     if (error) {
@@ -78,25 +78,43 @@ export async function GET(request: NextRequest) {
         })
         
         if (details) {
-          // Update the book with new details
+          // Update the book with new details from PA-API
           const { error: updateError } = await supabase
             .from('books')
             .update({
-              title: details.title || book.title,
-              author: details.author || book.author,
-              cover_url: details.cover_url || book.cover_url
+              title: details.title,
+              author: details.author,
+              cover_url: details.cover_url
             })
             .eq('id', book.id)
           
           if (!updateError) {
             updated++
-            console.log(`Successfully updated book ${book.asin}`)
+            console.log(`Successfully updated book ${book.asin} with PA-API data`)
           } else {
             console.error(`Error updating book ${book.asin}:`, updateError)
           }
+        } else {
+          console.log(`PA-API returned null for ${book.asin}, keeping existing data or using fallback`)
+          // Only update if the current title is a fallback pattern
+          if (!book.title || book.title.startsWith('Book ') || book.title.includes('loading')) {
+            const { error: updateError } = await supabase
+              .from('books')
+              .update({
+                title: `Book ${book.asin}`,
+                author: book.author || 'Unknown Author',
+                cover_url: book.cover_url
+              })
+              .eq('id', book.id)
+            
+            if (!updateError) {
+              updated++
+              console.log(`Updated book ${book.asin} with fallback data`)
+            }
+          }
         }
         
-        // Add delay to avoid rate limiting (Amazon PA-API has rate limits)
+        // Add delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 1000))
         
       } catch (error) {
@@ -109,7 +127,7 @@ export async function GET(request: NextRequest) {
     }
     
     return NextResponse.json({ 
-      message: `Updated ${updated} books using Amazon PA-API`,
+      message: `Updated ${updated} books`,
       processed: books.length,
       debugInfo: debugInfo
     })

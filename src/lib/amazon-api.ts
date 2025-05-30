@@ -14,7 +14,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     // Validate environment variables
     if (!process.env.AMAZON_ACCESS_KEY || !process.env.AMAZON_SECRET_KEY || !process.env.AMAZON_PARTNER_TAG) {
       console.error('Missing Amazon API credentials. Required: AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, AMAZON_PARTNER_TAG')
-      return generateDefaultBookDetails(asin)
+      return null
     }
 
     // Initialize the API client
@@ -38,13 +38,14 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     getItemsRequest.resources = [
       'Images.Primary.Large',
       'Images.Primary.Medium',
-      'Images.Primary.Small', 
       'ItemInfo.Title',
       'ItemInfo.ByLineInfo'
     ]
 
-    console.log('Making PA-API request with:', {
-      partnerTag: getItemsRequest.partnerTag,
+    console.log('Making PA-API request with credentials and partner tag:', {
+      hasAccessKey: !!process.env.AMAZON_ACCESS_KEY,
+      hasSecretKey: !!process.env.AMAZON_SECRET_KEY,
+      partnerTag: process.env.AMAZON_PARTNER_TAG,
       marketplace: getItemsRequest.marketplace,
       itemIds: getItemsRequest.itemIds,
       resources: getItemsRequest.resources
@@ -57,7 +58,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
             message: error.message,
             code: error.code,
             statusCode: error.statusCode,
-            response: error.response
+            response: error.response?.data || error.response
           })
           reject(error)
         } else {
@@ -68,87 +69,76 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     })
 
     const responseData = response as any
-    console.log('PA-API Response structure:', JSON.stringify(responseData, null, 2))
+    console.log('PA-API Full Response:', JSON.stringify(responseData, null, 2))
     
-    // Handle errors in response as per documentation
+    // Handle errors in response
     if (responseData.Errors && responseData.Errors.length > 0) {
       console.error('PA-API returned errors:', responseData.Errors)
-      
-      // Check for specific error codes mentioned in documentation
-      const hasAccessDenied = responseData.Errors.some((err: any) => 
-        err.Code === 'AccessDeniedException' || err.Code === 'AccessDeniedAwsUsers'
-      )
-      
-      if (hasAccessDenied) {
-        console.error('Access denied - credentials may need migration. Check Associates Central.')
-      }
-      
-      const hasNoResults = responseData.Errors.some((err: any) => err.Code === 'NoResults')
-      if (hasNoResults) {
-        console.log('No results found for ASIN:', asin)
-      }
-      
-      return generateDefaultBookDetails(asin)
+      return null
     }
     
     // Process successful response
     if (responseData.ItemsResult?.Items && responseData.ItemsResult.Items.length > 0) {
       const item = responseData.ItemsResult.Items[0]
-      console.log('Processing item:', JSON.stringify(item, null, 2))
+      console.log('Processing item data:', JSON.stringify(item, null, 2))
       
       // Extract title
-      let title = 'Unknown Title'
+      let title = null
       if (item.ItemInfo?.Title?.DisplayValue) {
         title = item.ItemInfo.Title.DisplayValue
+        console.log('Found title:', title)
       }
       
-      // Extract author - check Contributors array as per documentation
-      let author = 'Unknown Author'
+      // Extract author
+      let author = null
       if (item.ItemInfo?.ByLineInfo?.Contributors && item.ItemInfo.ByLineInfo.Contributors.length > 0) {
-        // Get the first contributor (usually the author)
         const contributor = item.ItemInfo.ByLineInfo.Contributors[0]
         if (contributor.Name) {
           author = contributor.Name
+          console.log('Found author:', author)
         }
       } else if (item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue) {
         author = item.ItemInfo.ByLineInfo.Brand.DisplayValue
+        console.log('Found brand as author:', author)
       }
       
-      // Extract cover image - try different sizes as per documentation
+      // Extract cover image
       let cover_url = null
       if (item.Images?.Primary?.Large?.URL) {
         cover_url = item.Images.Primary.Large.URL
+        console.log('Found large cover:', cover_url)
       } else if (item.Images?.Primary?.Medium?.URL) {
         cover_url = item.Images.Primary.Medium.URL
-      } else if (item.Images?.Primary?.Small?.URL) {
-        cover_url = item.Images.Primary.Small.URL
+        console.log('Found medium cover:', cover_url)
       }
       
-      console.log('Successfully extracted book details:', { title, author, cover_url })
-      
-      return {
-        title,
-        author,
-        cover_url
+      // Only return data if we found at least a title
+      if (title) {
+        const bookDetails = {
+          title,
+          author: author || 'Unknown Author',
+          cover_url
+        }
+        console.log('Successfully extracted book details:', bookDetails)
+        return bookDetails
+      } else {
+        console.log('No title found in PA-API response')
+        return null
       }
     }
     
     console.log('No items found in PA-API response for ASIN:', asin)
-    return generateDefaultBookDetails(asin)
+    return null
     
   } catch (error: any) {
     console.error('Amazon PA-API error for ASIN', asin, ':', {
       message: error.message,
       code: error.code,
-      statusCode: error.statusCode
+      statusCode: error.statusCode,
+      stack: error.stack
     })
     
-    // Check for rate limiting as mentioned in documentation
-    if (error.statusCode === 429) {
-      console.error('Rate limit exceeded - TooManyRequests error')
-    }
-    
-    return generateDefaultBookDetails(asin)
+    return null
   }
 }
 
