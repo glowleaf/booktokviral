@@ -18,9 +18,15 @@ const createStripeInstance = () => {
     return null
   }
   
+  // Validate the secret key format
+  if (!secretKey.startsWith('sk_')) {
+    console.error('Invalid Stripe secret key format - must start with sk_')
+    return null
+  }
+  
   try {
     return require('stripe')(secretKey, {
-      apiVersion: '2025-05-28.basil',
+      apiVersion: '2025-05-28.basil', // Keep current API version
     })
   } catch (error) {
     console.error('Error creating Stripe instance:', error)
