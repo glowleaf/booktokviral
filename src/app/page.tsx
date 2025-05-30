@@ -87,7 +87,7 @@ export default async function Home() {
           <div className="bg-white rounded-2xl p-8 text-center">
             <div className="flex items-center justify-center mb-6">
               <Image
-                src="/featured-booktok-viral.svg"
+                src="/featured-booktok-viral.png"
                 alt="Get Featured"
                 width={200}
                 height={150}
