@@ -9,20 +9,12 @@ export interface BookDetails {
 
 export async function getBookDetails(asin: string): Promise<BookDetails | null> {
   try {
-    console.log('Fetching book details for ASIN:', asin)
-
-    // FORCE FALLBACK METHOD FIRST - bypass PA-API issues
-    console.log('Using fallback method to ensure book data is fetched')
-    const fallbackResult = await fallbackBookDetails(asin)
-    if (fallbackResult && fallbackResult.title !== `Book ${asin}`) {
-      console.log('Fallback method successful, returning:', fallbackResult)
-      return fallbackResult
-    }
+    console.log('Fetching book details from Amazon PA-API for ASIN:', asin)
 
     // Validate environment variables
     if (!process.env.AMAZON_ACCESS_KEY || !process.env.AMAZON_SECRET_KEY || !process.env.AMAZON_PARTNER_TAG) {
       console.error('Missing Amazon API credentials. Required: AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, AMAZON_PARTNER_TAG')
-      return fallbackResult || generateDefaultBookDetails(asin)
+      return generateDefaultBookDetails(asin)
     }
 
     // Initialize the API client
@@ -96,7 +88,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
         console.log('No results found for ASIN:', asin)
       }
       
-      return fallbackResult || generateDefaultBookDetails(asin)
+      return generateDefaultBookDetails(asin)
     }
     
     // Process successful response
@@ -142,7 +134,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     }
     
     console.log('No items found in PA-API response for ASIN:', asin)
-    return fallbackResult || generateDefaultBookDetails(asin)
+    return generateDefaultBookDetails(asin)
     
   } catch (error: any) {
     console.error('Amazon PA-API error for ASIN', asin, ':', {
@@ -156,76 +148,6 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
       console.error('Rate limit exceeded - TooManyRequests error')
     }
     
-    const fallbackResult = await fallbackBookDetails(asin)
-    return fallbackResult || generateDefaultBookDetails(asin)
-  }
-}
-
-async function fallbackBookDetails(asin: string): Promise<BookDetails | null> {
-  try {
-    console.log('Attempting fallback book details fetch for ASIN:', asin)
-    
-    // Try to fetch from Amazon product page directly
-    const amazonUrl = `https://www.amazon.com/dp/${asin}`
-    const response = await fetch(amazonUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
-
-    if (!response.ok) {
-      console.error('Failed to fetch Amazon page:', response.status)
-      return generateDefaultBookDetails(asin)
-    }
-
-    const html = await response.text()
-
-    // Extract title
-    const titleMatch = /<span id="productTitle"[^>]*>\s*(.*?)\s*<\/span>/i.exec(html)
-    const title = titleMatch?.[1]?.trim().replace(/\s+/g, ' ') || `Book ${asin}`
-
-    // Extract author
-    const authorPatterns = [
-      /<span class="author[^"]*">.*?<a[^>]*>(.*?)<\/a>/i,
-      /<span class="a-size-medium a-color-secondary">\s*by\s*<a[^>]*>(.*?)<\/a>/i,
-      /by\s*<a[^>]*class="[^"]*author[^"]*"[^>]*>(.*?)<\/a>/i
-    ]
-    
-    let author = 'Unknown Author'
-    for (const pattern of authorPatterns) {
-      const match = pattern.exec(html)
-      if (match) {
-        author = match[1].trim().replace(/\s+/g, ' ')
-        break
-      }
-    }
-
-    // Extract cover image
-    const coverPatterns = [
-      /<meta property="og:image" content="([^"]+)"/,
-      /<img[^>]*id="landingImage"[^>]*src="([^"]+)"/,
-      /<img[^>]*data-old-hires="([^"]+)"/
-    ]
-    
-    let cover_url = `https://images-na.ssl-images-amazon.com/images/P/${asin}.01._SCLZZZZZZZ_.jpg`
-    for (const pattern of coverPatterns) {
-      const match = pattern.exec(html)
-      if (match) {
-        cover_url = match[1]
-        break
-      }
-    }
-
-    console.log('Fallback fetch successful:', { title, author, cover_url })
-
-    return {
-      title,
-      author,
-      cover_url
-    }
-
-  } catch (error) {
-    console.error('Fallback fetch failed for ASIN', asin, ':', error)
     return generateDefaultBookDetails(asin)
   }
 }
@@ -234,6 +156,6 @@ function generateDefaultBookDetails(asin: string): BookDetails {
   return {
     title: `Book ${asin}`,
     author: 'Unknown Author',
-    cover_url: `https://images-na.ssl-images-amazon.com/images/P/${asin}.01._SCLZZZZZZZ_.jpg`
+    cover_url: null
   }
 } 
