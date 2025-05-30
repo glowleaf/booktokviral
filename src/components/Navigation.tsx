@@ -1,0 +1,68 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase'
+
+export default function Navigation() {
+  const [user, setUser] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const supabase = createClient()
+
+  useEffect(() => {
+    checkUser()
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        checkAdminStatus(session.user)
+      } else {
+        setUser(null)
+        setIsAdmin(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setUser(user)
+      checkAdminStatus(user)
+    }
+  }
+
+  const checkAdminStatus = async (user: any) => {
+    if (user?.email === 'glowleaf@gmail.com') {
+      setIsAdmin(true)
+    }
+  }
+
+  return (
+    <nav className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <Link href="/" className="text-2xl font-bold text-pink-600">
+              📚 BookTok Viral
+            </Link>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link href="/weekly" className="text-gray-700 hover:text-pink-600">
+              Weekly Leaderboard
+            </Link>
+            {isAdmin && (
+              <Link href="/admin" className="text-orange-600 hover:text-orange-700 font-medium">
+                Admin
+              </Link>
+            )}
+            <Link href="/submit" className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700">
+              Submit Book
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  )
+} 
