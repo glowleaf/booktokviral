@@ -5,9 +5,28 @@ import { useRouter } from 'next/navigation'
 
 type AuthMode = 'signin' | 'signup' | 'magic'
 
+const BOOK_CATEGORIES = [
+  'Fantasy',
+  'Romance',
+  'Mystery',
+  'Thriller',
+  'Young Adult',
+  'Fiction',
+  'Non-Fiction',
+  'Science Fiction',
+  'Historical Fiction',
+  'Self-Help',
+  'Biography',
+  'Horror',
+  'Poetry',
+  'Humor',
+  'Other'
+]
+
 export default function SubmitForm() {
   const [asinInput, setAsinInput] = useState('')
   const [tiktokUrl, setTiktokUrl] = useState('')
+  const [category, setCategory] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -26,19 +45,21 @@ export default function SubmitForm() {
     // Extract ASIN from various Amazon URL formats
     const asinPatterns = [
       // Standard product URLs: /dp/ASIN or /gp/product/ASIN
-      /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i,
+      /\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:[\/\?]|$)/i,
       // ASIN in query parameters
-      /[?&]ASIN=([A-Z0-9]{10})/i,
+      /[?&]ASIN=([A-Z0-9]{10})(?:&|$)/i,
       // Product ID in various formats
-      /\/product\/([A-Z0-9]{10})/i,
-      // Direct ASIN pattern
-      /([A-Z0-9]{10})/i
+      /\/product\/([A-Z0-9]{10})(?:[\/\?]|$)/i,
     ]
     
     for (const pattern of asinPatterns) {
       const match = cleanInput.match(pattern)
       if (match && match[1]) {
-        return match[1].toUpperCase()
+        // Verify it's a valid ASIN format
+        const potentialAsin = match[1].toUpperCase()
+        if (/^[A-Z0-9]{10}$/.test(potentialAsin)) {
+          return potentialAsin
+        }
       }
     }
     
@@ -86,6 +107,11 @@ export default function SubmitForm() {
       return
     }
 
+    if (!category) {
+      setError('Please select a category')
+      return
+    }
+
     if (!acceptTerms) {
       setError('Please accept the terms and conditions')
       return
@@ -96,6 +122,7 @@ export default function SubmitForm() {
     try {
       const formData = new FormData()
       formData.append('asin', finalAsin.toUpperCase())
+      formData.append('category', category)
       if (tiktokUrl.trim()) {
         formData.append('tiktok_url', tiktokUrl.trim())
       }
@@ -154,6 +181,29 @@ export default function SubmitForm() {
             <span className="font-mono font-semibold text-green-800">{extractedAsin}</span>
           </div>
         )}
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+          Book Category *
+        </label>
+        <select
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+          required
+        >
+          <option value="">Select a category</option>
+          {BOOK_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Choose the category that best fits this book
+        </p>
       </div>
 
       <div>

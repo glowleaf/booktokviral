@@ -7,256 +7,184 @@ export interface BookDetails {
   cover_url: string | null
 }
 
+// Marketplace configurations
+const MARKETPLACES = {
+  'US': { host: 'webservices.amazon.com', region: 'us-east-1', marketplace: 'www.amazon.com' },
+  'UK': { host: 'webservices.amazon.co.uk', region: 'eu-west-1', marketplace: 'www.amazon.co.uk' },
+  'CA': { host: 'webservices.amazon.ca', region: 'us-east-1', marketplace: 'www.amazon.ca' },
+  'DE': { host: 'webservices.amazon.de', region: 'eu-west-1', marketplace: 'www.amazon.de' },
+}
+
 export async function getBookDetails(asin: string): Promise<BookDetails | null> {
   try {
-    console.log('=== PA-API DEBUG START ===')
-    console.log('Fetching book details from Amazon PA-API for ASIN:', asin)
+    console.log('[Amazon API] ============================================')
+    console.log('[Amazon API] Starting request for ASIN:', asin)
+    console.log('[Amazon API] Timestamp:', new Date().toISOString())
 
-    // Validate environment variables
+    // Validate credentials
     if (!process.env.AMAZON_ACCESS_KEY || !process.env.AMAZON_SECRET_KEY || !process.env.AMAZON_PARTNER_TAG) {
-      console.error('Missing Amazon API credentials')
+      console.error('[Amazon API] Missing credentials')
       return null
     }
 
-    console.log('Credentials check:', {
-      hasAccessKey: !!process.env.AMAZON_ACCESS_KEY,
-      hasSecretKey: !!process.env.AMAZON_SECRET_KEY,
-      hasPartnerTag: !!process.env.AMAZON_PARTNER_TAG,
-      accessKeyLength: process.env.AMAZON_ACCESS_KEY?.length,
-      partnerTag: process.env.AMAZON_PARTNER_TAG
-    })
+    console.log('[Amazon API] Credentials present:')
+    console.log('  - Access Key:', process.env.AMAZON_ACCESS_KEY?.substring(0, 10) + '...')
+    console.log('  - Partner Tag:', process.env.AMAZON_PARTNER_TAG)
 
-    // Initialize the API client using official SDK pattern
+    // Configure the API client
     const defaultClient = ProductAdvertisingAPIv1.ApiClient.instance
-    
-    // Set credentials
     defaultClient.accessKey = process.env.AMAZON_ACCESS_KEY
     defaultClient.secretKey = process.env.AMAZON_SECRET_KEY
-    
-    // Set host and region for US marketplace
     defaultClient.host = 'webservices.amazon.com'
     defaultClient.region = 'us-east-1'
 
-    console.log('Client configured:', {
-      host: defaultClient.host,
-      region: defaultClient.region
-    })
-
     const api = new ProductAdvertisingAPIv1.DefaultApi()
 
-    // Create GetItems request using official SDK pattern
+    // Create GetItems request
     const getItemsRequest = new ProductAdvertisingAPIv1.GetItemsRequest()
     
-    // Set partner information
     getItemsRequest['PartnerTag'] = process.env.AMAZON_PARTNER_TAG
     getItemsRequest['PartnerType'] = 'Associates'
-    
-    // Set marketplace
     getItemsRequest['Marketplace'] = 'www.amazon.com'
-    
-    // Set item IDs and type - try multiple known good ASINs
-    const testAsins = [asin, 'B073FZLLYS', 'B08N5WRWNW'] // Include known good Harry Potter ASINs
-    getItemsRequest['ItemIds'] = testAsins
+    getItemsRequest['ItemIds'] = [asin]
     getItemsRequest['ItemIdType'] = 'ASIN'
-    
-    // Set resources we want to retrieve
     getItemsRequest['Resources'] = [
       'Images.Primary.Large',
-      'Images.Primary.Medium',
+      'Images.Primary.Medium', 
       'ItemInfo.Title',
-      'ItemInfo.ByLineInfo'
+      'ItemInfo.ByLineInfo',
+      'ItemInfo.ContentInfo',
+      'ItemInfo.Features',
+      'ItemInfo.ProductInfo',
+      'Offers.Listings.Price'
     ]
 
-    console.log('Request parameters:', {
-      PartnerTag: getItemsRequest['PartnerTag'],
-      PartnerType: getItemsRequest['PartnerType'],
-      Marketplace: getItemsRequest['Marketplace'],
-      ItemIds: getItemsRequest['ItemIds'],
-      ItemIdType: getItemsRequest['ItemIdType'],
-      Resources: getItemsRequest['Resources']
-    })
+    console.log('[Amazon API] Request object:', JSON.stringify({
+      PartnerTag: getItemsRequest.PartnerTag,
+      PartnerType: getItemsRequest.PartnerType,
+      Marketplace: getItemsRequest.Marketplace,
+      ItemIds: getItemsRequest.ItemIds,
+      Resources: getItemsRequest.Resources
+    }, null, 2))
 
-    console.log('Making PA-API GetItems request...')
-
-    // Make the API call using the official callback pattern
-    const response = await new Promise((resolve, reject) => {
-      const callback = function (error: any, data: any, response: any) {
-        console.log('=== PA-API CALLBACK RECEIVED ===')
-        
+    // Make the API call
+    const response = await new Promise<any>((resolve, reject) => {
+      console.log('[Amazon API] Sending request...')
+      api.getItems(getItemsRequest, (error: any, data: any, response: any) => {
         if (error) {
-          console.log('ERROR DETAILS:')
-          console.log('- Error message:', error.message)
-          console.log('- Error code:', error.code)
-          console.log('- Status code:', error.status || error.statusCode)
-          console.log('- Full error object:', JSON.stringify(error, null, 2))
+          console.error('[Amazon API] ❌ API Error:', error.message)
+          console.error('[Amazon API] Error code:', error.code)
+          console.error('[Amazon API] Status code:', error.statusCode)
           
-          if (error.response) {
-            console.log('- Response data:', error.response.data || error.response.text)
-            console.log('- Response status:', error.response.status)
-            console.log('- Response headers:', error.response.headers)
+          if (error.response && error.response.text) {
+            try {
+              const errorBody = JSON.parse(error.response.text)
+              console.error('[Amazon API] Error response body:', JSON.stringify(errorBody, null, 2))
+            } catch (e) {
+              console.error('[Amazon API] Raw error response:', error.response.text)
+            }
           }
-          
-          resolve({ error: error })
+          reject(error)
         } else {
-          console.log('SUCCESS - Raw data received:', JSON.stringify(data, null, 2))
-          const getItemsResponse = ProductAdvertisingAPIv1.GetItemsResponse.constructFromObject(data)
-          console.log('Constructed response:', JSON.stringify(getItemsResponse, null, 2))
-          resolve({ success: getItemsResponse })
+          console.log('[Amazon API] ✅ API Success')
+          console.log('[Amazon API] Response status:', response?.statusCode)
+          resolve(data)
         }
-      }
-
-      try {
-        console.log('Calling api.getItems...')
-        api.getItems(getItemsRequest, callback)
-      } catch (ex) {
-        console.log('Exception during API call:', ex)
-        resolve({ error: ex })
-      }
+      })
     })
 
-    console.log('=== PA-API RESPONSE PROCESSING ===')
-    
-    const result = response as any
-    
-    if (result.error) {
-      console.log('API call failed with error:', result.error)
-      return null
-    }
-    
-    if (!result.success) {
-      console.log('No success response received')
+    console.log('[Amazon API] Response received:', JSON.stringify(response, null, 2))
+
+    // Check for valid response
+    if (!response) {
+      console.log('[Amazon API] ⚠️ Empty response from PA-API')
       return null
     }
 
-    const getItemsResponse = result.success
-    
-    // Check for errors in response
-    if (getItemsResponse['Errors'] !== undefined && getItemsResponse['Errors'].length > 0) {
-      console.log('=== PA-API RETURNED ERRORS ===')
-      console.log('Error count:', getItemsResponse['Errors'].length)
-      getItemsResponse['Errors'].forEach((error: any, index: number) => {
-        console.log(`Error ${index + 1}:`)
-        console.log('- Code:', error['Code'])
-        console.log('- Message:', error['Message'])
-        console.log('- Full error:', JSON.stringify(error, null, 2))
+    // Check for errors
+    if (response.Errors && response.Errors.length > 0) {
+      console.error('[Amazon API] ⚠️ Response contains errors:')
+      response.Errors.forEach((err: any, index: number) => {
+        console.error(`[Amazon API] Error ${index + 1}:`, {
+          Code: err.Code,
+          Message: err.Message,
+          Type: err.__type
+        })
       })
+      return null
     }
     
-    // Process successful response
-    if (getItemsResponse['ItemsResult'] !== undefined && getItemsResponse['ItemsResult']['Items'] !== undefined) {
-      console.log('=== PROCESSING ITEMS ===')
-      console.log('Items found:', getItemsResponse['ItemsResult']['Items'].length)
-      
-      // Look for our target ASIN first, then any valid item
-      let targetItem = null
-      
-      for (const item of getItemsResponse['ItemsResult']['Items']) {
-        console.log('Processing item ASIN:', item['ASIN'])
-        
-        if (item['ASIN'] === asin) {
-          targetItem = item
-          console.log('Found target ASIN:', asin)
-          break
-        }
-      }
-      
-      // If target ASIN not found, use first available item
-      if (!targetItem && getItemsResponse['ItemsResult']['Items'].length > 0) {
-        targetItem = getItemsResponse['ItemsResult']['Items'][0]
-        console.log('Using first available item:', targetItem['ASIN'])
-      }
-      
-      if (targetItem) {
-        let title = null
-        let author = null
-        let cover_url = null
-        
-        console.log('=== EXTRACTING DATA ===')
-        
-        // Extract title
-        if (targetItem['ItemInfo'] !== undefined && 
-            targetItem['ItemInfo']['Title'] !== undefined && 
-            targetItem['ItemInfo']['Title']['DisplayValue'] !== undefined) {
-          title = targetItem['ItemInfo']['Title']['DisplayValue']
-          console.log('✓ Title found:', title)
-        } else {
-          console.log('✗ No title found')
-        }
-        
-        // Extract author from Contributors
-        if (targetItem['ItemInfo'] !== undefined && 
-            targetItem['ItemInfo']['ByLineInfo'] !== undefined && 
-            targetItem['ItemInfo']['ByLineInfo']['Contributors'] !== undefined &&
-            targetItem['ItemInfo']['ByLineInfo']['Contributors'].length > 0) {
-          const contributor = targetItem['ItemInfo']['ByLineInfo']['Contributors'][0]
-          if (contributor['Name'] !== undefined) {
-            author = contributor['Name']
-            console.log('✓ Author found:', author)
-          }
-        } else if (targetItem['ItemInfo'] !== undefined && 
-                   targetItem['ItemInfo']['ByLineInfo'] !== undefined && 
-                   targetItem['ItemInfo']['ByLineInfo']['Brand'] !== undefined &&
-                   targetItem['ItemInfo']['ByLineInfo']['Brand']['DisplayValue'] !== undefined) {
-          author = targetItem['ItemInfo']['ByLineInfo']['Brand']['DisplayValue']
-          console.log('✓ Brand as Author found:', author)
-        } else {
-          console.log('✗ No author found')
-        }
-        
-        // Extract cover image
-        if (targetItem['Images'] !== undefined && 
-            targetItem['Images']['Primary'] !== undefined) {
-          if (targetItem['Images']['Primary']['Large'] !== undefined &&
-              targetItem['Images']['Primary']['Large']['URL'] !== undefined) {
-            cover_url = targetItem['Images']['Primary']['Large']['URL']
-            console.log('✓ Large cover found:', cover_url)
-          } else if (targetItem['Images']['Primary']['Medium'] !== undefined &&
-                     targetItem['Images']['Primary']['Medium']['URL'] !== undefined) {
-            cover_url = targetItem['Images']['Primary']['Medium']['URL']
-            console.log('✓ Medium cover found:', cover_url)
-          } else {
-            console.log('✗ No cover image found')
-          }
-        } else {
-          console.log('✗ No images found')
-        }
-        
-        // Return data if we found at least a title
-        if (title) {
-          const bookDetails = {
-            title,
-            author: author || 'Unknown Author',
-            cover_url
-          }
-          console.log('=== SUCCESS ===')
-          console.log('Final book details:', bookDetails)
-          console.log('=== PA-API DEBUG END ===')
-          return bookDetails
-        } else {
-          console.log('=== FAILURE: NO TITLE ===')
-          console.log('=== PA-API DEBUG END ===')
-          return null
-        }
-      }
+    // Check ItemsResult
+    if (!response.ItemsResult) {
+      console.log('[Amazon API] ⚠️ No ItemsResult in response')
+      return null
+    }
+
+    if (!response.ItemsResult.Items || response.ItemsResult.Items.length === 0) {
+      console.log('[Amazon API] ⚠️ No items found for ASIN:', asin)
+      return null
+    }
+
+    const item = response.ItemsResult.Items[0]
+    console.log('[Amazon API] 📦 Item found!')
+    console.log('[Amazon API] Item structure:', JSON.stringify(item, null, 2))
+    
+    // Extract data with detailed logging
+    let title = null
+    let author = null
+    let cover_url = null
+
+    // Title extraction
+    if (item.ItemInfo?.Title?.DisplayValue) {
+      title = item.ItemInfo.Title.DisplayValue
+      console.log('[Amazon API] ✅ Title found:', title)
     } else {
-      console.log('=== NO ITEMS IN RESPONSE ===')
-      console.log('ItemsResult:', getItemsResponse['ItemsResult'])
+      console.log('[Amazon API] ❌ No title found in ItemInfo.Title.DisplayValue')
     }
     
-    console.log('=== PA-API DEBUG END ===')
-    return null
+    // Author extraction
+    if (item.ItemInfo?.ByLineInfo?.Contributors?.length > 0) {
+      author = item.ItemInfo.ByLineInfo.Contributors[0].Name
+      console.log('[Amazon API] ✅ Author found:', author)
+    } else if (item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue) {
+      author = item.ItemInfo.ByLineInfo.Brand.DisplayValue
+      console.log('[Amazon API] ✅ Brand as author:', author)
+    } else {
+      console.log('[Amazon API] ❌ No author found')
+    }
+    
+    // Cover image extraction
+    if (item.Images?.Primary?.Large?.URL) {
+      cover_url = item.Images.Primary.Large.URL
+      console.log('[Amazon API] ✅ Large cover found:', cover_url)
+    } else if (item.Images?.Primary?.Medium?.URL) {
+      cover_url = item.Images.Primary.Medium.URL
+      console.log('[Amazon API] ✅ Medium cover found:', cover_url)
+    } else {
+      console.log('[Amazon API] ❌ No cover image found')
+    }
+    
+    const bookDetails = {
+      title: title || `Book ${asin}`,
+      author: author || 'Unknown Author',
+      cover_url: cover_url
+    }
+    
+    console.log('[Amazon API] Final book details:', bookDetails)
+    console.log('[Amazon API] ============================================')
+    
+    return bookDetails
     
   } catch (error: any) {
-    console.error('=== PA-API EXCEPTION ===')
-    console.error('Exception details:', {
-      message: error.message,
-      code: error.code,
-      statusCode: error.statusCode,
-      stack: error.stack
-    })
-    console.log('=== PA-API DEBUG END ===')
+    console.error('[Amazon API] 💥 Exception caught:', error.message)
+    console.error('[Amazon API] Stack trace:', error.stack)
     
-    return null
+    // Return fallback data
+    return {
+      title: `Book ${asin}`,
+      author: 'Unknown Author',
+      cover_url: null
+    }
   }
 }
 
