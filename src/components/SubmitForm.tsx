@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 interface BookDetails {
   title: string | null
@@ -171,12 +170,10 @@ export default function SubmitForm() {
           <div className="flex items-start space-x-4">
             {bookDetails.cover_url && (
               <div className="relative w-16 h-24 flex-shrink-0">
-                <Image
+                <img
                   src={bookDetails.cover_url}
                   alt={bookDetails.title || 'Book cover'}
-                  fill
-                  className="object-cover rounded"
-                  sizes="64px"
+                  className="w-full h-full object-cover rounded"
                 />
               </div>
             )}
