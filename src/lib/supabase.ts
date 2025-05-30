@@ -126,6 +126,35 @@ export type Database = {
           created_at?: string
         }
       }
+      weekly_winners: {
+        Row: {
+          id: string
+          book_id: string
+          week_start: string
+          week_end: string
+          final_vote_count: number
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          book_id: string
+          week_start: string
+          week_end: string
+          final_vote_count: number
+          position: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          book_id?: string
+          week_start?: string
+          week_end?: string
+          final_vote_count?: number
+          position?: number
+          created_at?: string
+        }
+      }
     }
   }
 } 

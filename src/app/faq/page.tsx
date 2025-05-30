@@ -58,7 +58,7 @@ export default function FAQPage() {
     },
     {
       question: "🗳️ How does the voting system work?",
-      answer: "Anyone can vote for books they love - no account required! We use secure cookie tracking so you can only vote once per book. Authenticated users can also vote normally. Votes determine the weekly rankings, and the top 3 books each week get special badges (🥇🥈🥉) and massive exposure. Votes reset every Monday at midnight!"
+      answer: "Anyone can vote for books they love - no account required! We use secure cookie tracking so you can only vote once per book per week. Votes determine the weekly rankings, and the top 3 books each week get special badges (🥇🥈🥉) and permanent recognition in our Hall of Fame. Votes reset every Monday at midnight for a fresh weekly competition!"
     },
     {
       question: "⭐ What does 'Get Featured' mean?",
@@ -74,11 +74,11 @@ export default function FAQPage() {
     },
     {
       question: "🔄 When do votes reset?",
-      answer: "Votes reset every Monday at midnight! This creates weekly competitions where books compete for the top spots. You can see the countdown timer on the homepage showing exactly when the next reset happens."
+      answer: "Votes reset every Monday at midnight! This creates fresh weekly competitions where every book gets a fair shot at going viral. Before the reset, we save all the winners to our Hall of Fame, so your achievements are preserved forever. You can see the countdown timer on the homepage!"
     },
     {
       question: "🏆 What happens to weekly winners?",
-      answer: "The top 3 books each week get special winner badges (🥇🥈🥉) and are featured in our 'Past Viral' hall of fame! They get permanent recognition and are showcased as BookTok legends who dominated their week."
+      answer: "The top performers each week get permanently featured in our 'Hall of Viral Fame'! We save their final vote counts, positions, and week dates. The all-time legends with the highest single-week vote counts get special recognition. Your viral success is preserved forever, even after votes reset!"
     },
     {
       question: "📖 What's an ASIN and how do I find it?",
