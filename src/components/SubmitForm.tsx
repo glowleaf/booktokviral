@@ -8,11 +8,58 @@ type AuthMode = 'signin' | 'signup' | 'magic'
 export default function SubmitForm() {
   const [asinInput, setAsinInput] = useState('')
   const [tiktokUrl, setTiktokUrl] = useState('')
+  const [category, setCategory] = useState('BookTok')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [extractedAsin, setExtractedAsin] = useState('')
   const router = useRouter()
+
+  // Popular BookTok categories
+  const bookCategories = [
+    'BookTok',
+    'Dark Romance',
+    'Romantasy',
+    'Contemporary Romance',
+    'Fantasy',
+    'Young Adult',
+    'New Adult',
+    'Enemies to Lovers',
+    'Mafia Romance',
+    'Vampire Romance',
+    'Fae Romance',
+    'Sports Romance',
+    'Billionaire Romance',
+    'Small Town Romance',
+    'Reverse Harem',
+    'Why Choose',
+    'Omegaverse',
+    'Bully Romance',
+    'Age Gap',
+    'Forbidden Romance',
+    'Second Chance Romance',
+    'Friends to Lovers',
+    'Fake Dating',
+    'Marriage of Convenience',
+    'Grumpy x Sunshine',
+    'Touch Her and Die',
+    'Who Did This to You',
+    'Morally Gray MMC',
+    'Spicy Romance',
+    'Slow Burn',
+    'Instalove',
+    'Dystopian',
+    'Sci-Fi Romance',
+    'Paranormal Romance',
+    'Historical Romance',
+    'LGBTQ+ Romance',
+    'Thriller',
+    'Mystery',
+    'Horror',
+    'Literary Fiction',
+    'Self-Help',
+    'Non-Fiction'
+  ]
 
   const extractASINFromURL = (input: string): string | null => {
     // Remove whitespace
@@ -86,6 +133,11 @@ export default function SubmitForm() {
       return
     }
 
+    if (!category) {
+      setError('Please select a book category')
+      return
+    }
+
     if (!acceptTerms) {
       setError('Please accept the terms and conditions')
       return
@@ -96,6 +148,7 @@ export default function SubmitForm() {
     try {
       const formData = new FormData()
       formData.append('asin', finalAsin.toUpperCase())
+      formData.append('category', category)
       if (tiktokUrl.trim()) {
         formData.append('tiktok_url', tiktokUrl.trim())
       }
@@ -154,6 +207,28 @@ export default function SubmitForm() {
             <span className="font-mono font-semibold text-green-800">{extractedAsin}</span>
           </div>
         )}
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+          Book Category *
+        </label>
+        <select
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+          required
+        >
+          {bookCategories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Choose the category that best describes your book
+        </p>
       </div>
 
       <div>

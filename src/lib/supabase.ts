@@ -37,6 +37,7 @@ export type Database = {
           title: string | null
           author: string | null
           cover_url: string | null
+          category: string | null
           tiktok_url: string | null
           created_by: string | null
           featured_until: string | null
@@ -48,6 +49,7 @@ export type Database = {
           title?: string | null
           author?: string | null
           cover_url?: string | null
+          category?: string | null
           tiktok_url?: string | null
           created_by?: string | null
           featured_until?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           title?: string | null
           author?: string | null
           cover_url?: string | null
+          category?: string | null
           tiktok_url?: string | null
           created_by?: string | null
           featured_until?: string | null

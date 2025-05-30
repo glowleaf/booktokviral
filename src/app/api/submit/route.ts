@@ -15,10 +15,15 @@ export async function POST(request: NextRequest) {
     // Parse form data
     const formData = await request.formData()
     const asin = formData.get('asin') as string
+    const category = formData.get('category') as string
     const tiktok_url = formData.get('tiktok_url') as string | null
 
     if (!asin) {
       return new NextResponse('ASIN is required', { status: 400 })
+    }
+
+    if (!category) {
+      return new NextResponse('Category is required', { status: 400 })
     }
 
     // Validate ASIN format
@@ -70,6 +75,7 @@ export async function POST(request: NextRequest) {
       title,
       author,
       cover_url,
+      category,
       tiktok_url: tiktok_url || null,
       created_by: user.id,
     }
@@ -92,7 +98,7 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Error submitting book', { status: 500 })
     }
 
-    console.log('Book submitted successfully:', asin)
+    console.log('Book submitted successfully:', asin, 'Category:', category)
 
     // Return success with book ID
     return NextResponse.json({ success: true, bookId: book.id })
