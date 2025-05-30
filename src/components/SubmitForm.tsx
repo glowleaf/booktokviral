@@ -107,6 +107,16 @@ export default function SubmitForm() {
         </p>
       </div>
 
+      {/* Amazon Affiliate Disclosure */}
+      <div className="p-4 bg-blue-50 rounded-lg">
+        <h4 className="font-medium text-blue-900 mb-2">📚 Amazon Affiliate Program</h4>
+        <p className="text-sm text-blue-800">
+          BookTok Viral participates in the Amazon Associates Program. When you submit a book, 
+          Amazon links will include our affiliate tag to help support the platform. This doesn't 
+          affect the book price or your submission.
+        </p>
+      </div>
+
       <div className="flex items-start">
         <input
           type="checkbox"
@@ -120,8 +130,8 @@ export default function SubmitForm() {
           I accept the{' '}
           <a href="/terms" className="text-pink-600 hover:text-pink-700 underline">
             terms and conditions
-          </a>{' '}
-          and confirm that I have the right to submit this book.
+          </a>, understand that Amazon links will include affiliate tags, 
+          and confirm that I have the right to submit this book. *
         </label>
       </div>
 

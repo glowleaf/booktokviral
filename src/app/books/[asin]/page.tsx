@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import VoteButton from '@/components/VoteButton'
 import FeatureButton from '@/components/FeatureButton'
+import { getAmazonAffiliateLink } from '@/lib/amazon'
 
 interface BookPageProps {
   params: Promise<{
@@ -31,6 +32,7 @@ export default async function BookPage({ params }: BookPageProps) {
 
   const voteCount = book.votes?.[0]?.count || 0
   const isFeatured = book.featured_until && new Date(book.featured_until) > new Date()
+  const amazonAffiliateLink = getAmazonAffiliateLink(book.asin)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
@@ -96,19 +98,22 @@ export default async function BookPage({ params }: BookPageProps) {
                   </div>
                 )}
 
-                {/* Amazon Link */}
+                {/* Amazon Affiliate Link */}
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                   <h3 className="font-semibold text-blue-900 mb-2">
                     📚 Get This Book
                   </h3>
                   <a
-                    href={`https://www.amazon.com/dp/${book.asin}`}
+                    href={amazonAffiliateLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-block"
                   >
-                    View on Amazon
+                    Buy on Amazon
                   </a>
+                  <p className="text-xs text-gray-600 mt-2">
+                    * As an Amazon Associate, BookTok Viral earns from qualifying purchases
+                  </p>
                 </div>
 
                 {/* Feature This Book */}

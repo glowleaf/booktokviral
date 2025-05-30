@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,13 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Navigation />
         <main>{children}</main>
-        <footer className="bg-gray-50 border-t mt-16">
-          <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-gray-500">
-              © 2024 BookTok Viral. Discover your next favorite book.
-            </p>
-          </div>
-        </footer>
+        <Footer />
       </body>
     </html>
   );
