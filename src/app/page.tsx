@@ -182,6 +182,11 @@ export default async function Home() {
                         <p className="text-gray-600 mt-1">by {book.author}</p>
                       )}
                       <div className="flex items-center mt-2 space-x-4">
+                        {book.category && (
+                          <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">
+                            📚 {book.category}
+                          </span>
+                        )}
                         <span className="text-sm text-gray-500">
                           ASIN: {book.asin}
                         </span>
@@ -266,6 +271,11 @@ function FeaturedBookCard({ book, currentUserId }: { book: Book, currentUserId?:
           {book.author && book.author !== 'Unknown Author' && (
             <p className="text-gray-600 text-sm">by {book.author}</p>
           )}
+          {book.category && (
+            <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium mt-2 inline-block">
+              📚 {book.category}
+            </span>
+          )}
         </div>
         <VoteButton bookId={book.id} initialVotes={voteCount} />
         {book.tiktok_url && (
@@ -312,6 +322,11 @@ function WinnerCard({ book, position, currentUserId }: { book: Book, position: n
           </h3>
           {book.author && book.author !== 'Unknown Author' && (
             <p className="text-gray-600 text-sm">by {book.author}</p>
+          )}
+          {book.category && (
+            <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium mt-2 inline-block">
+              📚 {book.category}
+            </span>
           )}
           <div className="mt-2">
             <span className="text-2xl font-black text-gray-800">{voteCount}</span>

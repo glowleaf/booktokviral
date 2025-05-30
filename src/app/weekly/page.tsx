@@ -118,6 +118,11 @@ export default async function WeeklyPage() {
                         <p className="text-gray-600 mt-1">by {book.author}</p>
                       )}
                       <div className="flex items-center mt-2 space-x-4">
+                        {book.category && (
+                          <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">
+                            📚 {book.category}
+                          </span>
+                        )}
                         <span className="text-sm text-gray-500">
                           ASIN: {book.asin}
                         </span>

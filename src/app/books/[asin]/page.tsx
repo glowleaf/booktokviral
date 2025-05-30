@@ -134,6 +134,14 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     <p className="text-xl text-gray-600 mb-4">by {book.author}</p>
                   )}
                   
+                  {book.category && (
+                    <div className="mb-4">
+                      <span className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">
+                        📚 {book.category}
+                      </span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center space-x-4 mb-6">
                     <VoteButton bookId={book.id} initialVotes={voteCount} />
                     <span className="text-gray-500">•</span>

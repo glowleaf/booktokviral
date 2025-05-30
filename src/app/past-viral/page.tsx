@@ -149,6 +149,11 @@ function LegendCard({ winner, rank }: { winner: WeeklyWinner, rank: number }) {
           {book.author && book.author !== 'Unknown Author' && (
             <p className="text-gray-600 text-sm">by {book.author}</p>
           )}
+          {book.category && (
+            <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium mt-2 inline-block">
+              📚 {book.category}
+            </span>
+          )}
           <div className="mt-2">
             <span className="text-2xl font-black text-pink-600">{winner.final_vote_count}</span>
             <span className="text-sm text-gray-600 ml-1">votes</span>
