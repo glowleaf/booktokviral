@@ -14,7 +14,7 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <a 
-                href="https://tiktok.com" 
+                href="https://www.tiktok.com/@booktokviralcom" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-pink-400 transition-colors"

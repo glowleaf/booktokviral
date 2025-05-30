@@ -107,6 +107,24 @@ export default function SubmitForm() {
         </p>
       </div>
 
+      {/* TikTok Follow Suggestion */}
+      <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
+        <h4 className="font-medium text-pink-900 mb-2 flex items-center">
+          🎵 Join Our BookTok Community!
+        </h4>
+        <p className="text-sm text-pink-800 mb-3">
+          Follow us on TikTok for the latest book trends, featured submissions, and BookTok content!
+        </p>
+        <a
+          href="https://www.tiktok.com/@booktokviralcom"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center bg-pink-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-pink-700 transition-colors"
+        >
+          Follow @booktokviralcom →
+        </a>
+      </div>
+
       {/* Amazon Affiliate Disclosure */}
       <div className="p-4 bg-blue-50 rounded-lg">
         <h4 className="font-medium text-blue-900 mb-2">📚 Amazon Affiliate Program</h4>

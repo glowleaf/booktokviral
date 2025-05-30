@@ -42,7 +42,7 @@ export default async function Home() {
             Join the BookTok community! Submit your favorite books, vote for trending reads, 
             and discover what everyone is talking about.
           </p>
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-4 mb-8">
             <Link 
               href="/submit"
               className="bg-pink-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-pink-700 transition-colors"
@@ -55,6 +55,24 @@ export default async function Home() {
             >
               View Leaderboard
             </Link>
+          </div>
+          
+          {/* TikTok Follow Section */}
+          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 border-2 border-pink-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center justify-center">
+              🎵 Follow Us on TikTok!
+            </h3>
+            <p className="text-gray-600 text-sm mb-4">
+              Get the latest book trends, featured submissions, and BookTok content
+            </p>
+            <a
+              href="https://www.tiktok.com/@booktokviralcom"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            >
+              Follow @booktokviralcom →
+            </a>
           </div>
         </div>
       </div>

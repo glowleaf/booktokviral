@@ -52,6 +52,14 @@ export default function Navigation() {
             <Link href="/weekly" className="text-gray-700 hover:text-pink-600">
               Weekly Leaderboard
             </Link>
+            <a 
+              href="https://www.tiktok.com/@booktokviralcom" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-700 hover:text-pink-600 flex items-center"
+            >
+              🎵 TikTok
+            </a>
             {isAdmin && (
               <Link href="/admin" className="text-orange-600 hover:text-orange-700 font-medium">
                 Admin
