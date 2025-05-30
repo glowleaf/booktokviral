@@ -18,9 +18,14 @@ const createStripeInstance = () => {
     return null
   }
   
-  return require('stripe')(secretKey, {
-    apiVersion: '2024-11-20.acacia',
-  })
+  try {
+    return require('stripe')(secretKey, {
+      apiVersion: '2024-06-20',
+    })
+  } catch (error) {
+    console.error('Error creating Stripe instance:', error)
+    return null
+  }
 }
 
 export const stripe = createStripeInstance()
