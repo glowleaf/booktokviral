@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import VoteButton from '@/components/VoteButton'
 import FeatureButton from '@/components/FeatureButton'
+import TikTokEmbed from '@/components/TikTokEmbed'
 import { getAmazonAffiliateLink } from '@/lib/amazon'
 
 interface BookPageProps {
@@ -83,18 +84,8 @@ export default async function BookPage({ params }: BookPageProps) {
 
                 {/* TikTok Video */}
                 {book.tiktok_url && (
-                  <div className="mb-6 p-4 bg-pink-50 rounded-lg">
-                    <h3 className="font-semibold text-pink-900 mb-2">
-                      🎵 BookTok Video
-                    </h3>
-                    <a
-                      href={book.tiktok_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-pink-600 hover:text-pink-700 underline"
-                    >
-                      Watch on TikTok →
-                    </a>
+                  <div className="mb-6">
+                    <TikTokEmbed url={book.tiktok_url} />
                   </div>
                 )}
 

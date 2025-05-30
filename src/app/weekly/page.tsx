@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import Image from 'next/image'
 import VoteButton from '@/components/VoteButton'
+import TikTokEmbed from '@/components/TikTokEmbed'
 import { Book } from '@/types/database'
 
 export default async function WeeklyPage() {
@@ -138,15 +139,8 @@ export default async function WeeklyPage() {
 
                   {/* TikTok Link */}
                   {book.tiktok_url && (
-                    <div className="mt-4 pt-4 border-t">
-                      <a
-                        href={book.tiktok_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-pink-600 hover:text-pink-700 text-sm flex items-center"
-                      >
-                        🎵 View BookTok Video
-                      </a>
+                    <div className="mt-4">
+                      <TikTokEmbed url={book.tiktok_url} compact={true} />
                     </div>
                   )}
                 </div>
