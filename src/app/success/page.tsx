@@ -3,11 +3,11 @@ import Image from 'next/image'
 import FeatureButton from '@/components/FeatureButton'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-interface SuccessPageProps {
-  searchParams: Promise<{ bookId?: string }>
-}
-
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
+export default async function SuccessPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ bookId?: string }> 
+}) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
