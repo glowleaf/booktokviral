@@ -4,15 +4,16 @@ import FeatureButton from '@/components/FeatureButton'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 interface SuccessPageProps {
-  searchParams: { bookId?: string }
+  searchParams: Promise<{ bookId?: string }>
 }
 
 export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Get the book ID from URL params (we'll need to pass this from the submit form)
-  const bookId = searchParams.bookId
+  // Await searchParams as required by Next.js 15
+  const resolvedSearchParams = await searchParams
+  const bookId = resolvedSearchParams.bookId
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-yellow-50 py-12">
