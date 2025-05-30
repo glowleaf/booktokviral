@@ -44,6 +44,14 @@ export default function Navigation() {
     }
   }
 
+  const handleSignOut = async () => {
+    if (!supabase) return
+    
+    await supabase.auth.signOut()
+    setUser(null)
+    setIsAdmin(false)
+  }
+
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -70,9 +78,32 @@ export default function Navigation() {
                 Admin
               </Link>
             )}
-            <Link href="/submit" className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700">
-              Submit Book
-            </Link>
+            
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-600">
+                  Welcome, {user.email?.split('@')[0]}!
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="text-gray-700 hover:text-pink-600 text-sm"
+                >
+                  Sign Out
+                </button>
+                <Link href="/submit" className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700">
+                  Submit Book
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Link href="/auth/signin" className="text-gray-700 hover:text-pink-600">
+                  Sign In
+                </Link>
+                <Link href="/submit" className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700">
+                  Submit Book
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
