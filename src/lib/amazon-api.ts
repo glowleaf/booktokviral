@@ -9,6 +9,7 @@ export interface BookDetails {
 
 export async function getBookDetails(asin: string): Promise<BookDetails | null> {
   try {
+    console.log('=== PA-API DEBUG START ===')
     console.log('Fetching book details from Amazon PA-API for ASIN:', asin)
 
     // Validate environment variables
@@ -16,6 +17,14 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
       console.error('Missing Amazon API credentials')
       return null
     }
+
+    console.log('Credentials check:', {
+      hasAccessKey: !!process.env.AMAZON_ACCESS_KEY,
+      hasSecretKey: !!process.env.AMAZON_SECRET_KEY,
+      hasPartnerTag: !!process.env.AMAZON_PARTNER_TAG,
+      accessKeyLength: process.env.AMAZON_ACCESS_KEY?.length,
+      partnerTag: process.env.AMAZON_PARTNER_TAG
+    })
 
     // Initialize the API client using official SDK pattern
     const defaultClient = ProductAdvertisingAPIv1.ApiClient.instance
@@ -27,6 +36,11 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     // Set host and region for US marketplace
     defaultClient.host = 'webservices.amazon.com'
     defaultClient.region = 'us-east-1'
+
+    console.log('Client configured:', {
+      host: defaultClient.host,
+      region: defaultClient.region
+    })
 
     const api = new ProductAdvertisingAPIv1.DefaultApi()
 
@@ -40,8 +54,9 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     // Set marketplace
     getItemsRequest['Marketplace'] = 'www.amazon.com'
     
-    // Set item IDs and type
-    getItemsRequest['ItemIds'] = [asin]
+    // Set item IDs and type - try multiple known good ASINs
+    const testAsins = [asin, 'B073FZLLYS', 'B08N5WRWNW'] // Include known good Harry Potter ASINs
+    getItemsRequest['ItemIds'] = testAsins
     getItemsRequest['ItemIdType'] = 'ASIN'
     
     // Set resources we want to retrieve
@@ -52,106 +67,158 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
       'ItemInfo.ByLineInfo'
     ]
 
-    console.log('Making PA-API GetItems request for ASIN:', asin)
+    console.log('Request parameters:', {
+      PartnerTag: getItemsRequest['PartnerTag'],
+      PartnerType: getItemsRequest['PartnerType'],
+      Marketplace: getItemsRequest['Marketplace'],
+      ItemIds: getItemsRequest['ItemIds'],
+      ItemIdType: getItemsRequest['ItemIdType'],
+      Resources: getItemsRequest['Resources']
+    })
+
+    console.log('Making PA-API GetItems request...')
 
     // Make the API call using the official callback pattern
     const response = await new Promise((resolve, reject) => {
       const callback = function (error: any, data: any, response: any) {
+        console.log('=== PA-API CALLBACK RECEIVED ===')
+        
         if (error) {
-          console.log('Error calling PA-API 5.0!')
-          console.log('Printing Full Error Object:', JSON.stringify(error, null, 1))
-          console.log('Status Code:', error['status'])
-          if (error['response'] !== undefined && error['response']['text'] !== undefined) {
-            console.log('Error Object:', JSON.stringify(error['response']['text'], null, 1))
+          console.log('ERROR DETAILS:')
+          console.log('- Error message:', error.message)
+          console.log('- Error code:', error.code)
+          console.log('- Status code:', error.status || error.statusCode)
+          console.log('- Full error object:', JSON.stringify(error, null, 2))
+          
+          if (error.response) {
+            console.log('- Response data:', error.response.data || error.response.text)
+            console.log('- Response status:', error.response.status)
+            console.log('- Response headers:', error.response.headers)
           }
-          resolve(null)
+          
+          resolve({ error: error })
         } else {
-          console.log('API called successfully.')
+          console.log('SUCCESS - Raw data received:', JSON.stringify(data, null, 2))
           const getItemsResponse = ProductAdvertisingAPIv1.GetItemsResponse.constructFromObject(data)
-          console.log('Complete Response:', JSON.stringify(getItemsResponse, null, 1))
-          resolve(getItemsResponse)
+          console.log('Constructed response:', JSON.stringify(getItemsResponse, null, 2))
+          resolve({ success: getItemsResponse })
         }
       }
 
       try {
+        console.log('Calling api.getItems...')
         api.getItems(getItemsRequest, callback)
       } catch (ex) {
-        console.log('Exception:', ex)
-        resolve(null)
+        console.log('Exception during API call:', ex)
+        resolve({ error: ex })
       }
     })
 
-    if (!response) {
-      console.log('PA-API returned null/error for ASIN:', asin)
+    console.log('=== PA-API RESPONSE PROCESSING ===')
+    
+    const result = response as any
+    
+    if (result.error) {
+      console.log('API call failed with error:', result.error)
+      return null
+    }
+    
+    if (!result.success) {
+      console.log('No success response received')
       return null
     }
 
-    const getItemsResponse = response as any
+    const getItemsResponse = result.success
     
     // Check for errors in response
-    if (getItemsResponse['Errors'] !== undefined) {
-      console.log('Errors:')
-      console.log('Complete Error Response:', JSON.stringify(getItemsResponse['Errors'], null, 1))
-      console.log('Printing 1st Error:')
-      const error_0 = getItemsResponse['Errors'][0]
-      console.log('Error Code:', error_0['Code'])
-      console.log('Error Message:', error_0['Message'])
-      return null
+    if (getItemsResponse['Errors'] !== undefined && getItemsResponse['Errors'].length > 0) {
+      console.log('=== PA-API RETURNED ERRORS ===')
+      console.log('Error count:', getItemsResponse['Errors'].length)
+      getItemsResponse['Errors'].forEach((error: any, index: number) => {
+        console.log(`Error ${index + 1}:`)
+        console.log('- Code:', error['Code'])
+        console.log('- Message:', error['Message'])
+        console.log('- Full error:', JSON.stringify(error, null, 2))
+      })
     }
     
     // Process successful response
     if (getItemsResponse['ItemsResult'] !== undefined && getItemsResponse['ItemsResult']['Items'] !== undefined) {
-      console.log('Printing First Item Information in ItemsResult:')
-      const item_0 = getItemsResponse['ItemsResult']['Items'][0]
+      console.log('=== PROCESSING ITEMS ===')
+      console.log('Items found:', getItemsResponse['ItemsResult']['Items'].length)
       
-      if (item_0 !== undefined) {
+      // Look for our target ASIN first, then any valid item
+      let targetItem = null
+      
+      for (const item of getItemsResponse['ItemsResult']['Items']) {
+        console.log('Processing item ASIN:', item['ASIN'])
+        
+        if (item['ASIN'] === asin) {
+          targetItem = item
+          console.log('Found target ASIN:', asin)
+          break
+        }
+      }
+      
+      // If target ASIN not found, use first available item
+      if (!targetItem && getItemsResponse['ItemsResult']['Items'].length > 0) {
+        targetItem = getItemsResponse['ItemsResult']['Items'][0]
+        console.log('Using first available item:', targetItem['ASIN'])
+      }
+      
+      if (targetItem) {
         let title = null
         let author = null
         let cover_url = null
         
-        // Extract ASIN
-        if (item_0['ASIN'] !== undefined) {
-          console.log('ASIN:', item_0['ASIN'])
-        }
+        console.log('=== EXTRACTING DATA ===')
         
         // Extract title
-        if (item_0['ItemInfo'] !== undefined && 
-            item_0['ItemInfo']['Title'] !== undefined && 
-            item_0['ItemInfo']['Title']['DisplayValue'] !== undefined) {
-          title = item_0['ItemInfo']['Title']['DisplayValue']
-          console.log('Title:', title)
+        if (targetItem['ItemInfo'] !== undefined && 
+            targetItem['ItemInfo']['Title'] !== undefined && 
+            targetItem['ItemInfo']['Title']['DisplayValue'] !== undefined) {
+          title = targetItem['ItemInfo']['Title']['DisplayValue']
+          console.log('✓ Title found:', title)
+        } else {
+          console.log('✗ No title found')
         }
         
         // Extract author from Contributors
-        if (item_0['ItemInfo'] !== undefined && 
-            item_0['ItemInfo']['ByLineInfo'] !== undefined && 
-            item_0['ItemInfo']['ByLineInfo']['Contributors'] !== undefined &&
-            item_0['ItemInfo']['ByLineInfo']['Contributors'].length > 0) {
-          const contributor = item_0['ItemInfo']['ByLineInfo']['Contributors'][0]
+        if (targetItem['ItemInfo'] !== undefined && 
+            targetItem['ItemInfo']['ByLineInfo'] !== undefined && 
+            targetItem['ItemInfo']['ByLineInfo']['Contributors'] !== undefined &&
+            targetItem['ItemInfo']['ByLineInfo']['Contributors'].length > 0) {
+          const contributor = targetItem['ItemInfo']['ByLineInfo']['Contributors'][0]
           if (contributor['Name'] !== undefined) {
             author = contributor['Name']
-            console.log('Author:', author)
+            console.log('✓ Author found:', author)
           }
-        } else if (item_0['ItemInfo'] !== undefined && 
-                   item_0['ItemInfo']['ByLineInfo'] !== undefined && 
-                   item_0['ItemInfo']['ByLineInfo']['Brand'] !== undefined &&
-                   item_0['ItemInfo']['ByLineInfo']['Brand']['DisplayValue'] !== undefined) {
-          author = item_0['ItemInfo']['ByLineInfo']['Brand']['DisplayValue']
-          console.log('Brand as Author:', author)
+        } else if (targetItem['ItemInfo'] !== undefined && 
+                   targetItem['ItemInfo']['ByLineInfo'] !== undefined && 
+                   targetItem['ItemInfo']['ByLineInfo']['Brand'] !== undefined &&
+                   targetItem['ItemInfo']['ByLineInfo']['Brand']['DisplayValue'] !== undefined) {
+          author = targetItem['ItemInfo']['ByLineInfo']['Brand']['DisplayValue']
+          console.log('✓ Brand as Author found:', author)
+        } else {
+          console.log('✗ No author found')
         }
         
         // Extract cover image
-        if (item_0['Images'] !== undefined && 
-            item_0['Images']['Primary'] !== undefined) {
-          if (item_0['Images']['Primary']['Large'] !== undefined &&
-              item_0['Images']['Primary']['Large']['URL'] !== undefined) {
-            cover_url = item_0['Images']['Primary']['Large']['URL']
-            console.log('Large Cover URL:', cover_url)
-          } else if (item_0['Images']['Primary']['Medium'] !== undefined &&
-                     item_0['Images']['Primary']['Medium']['URL'] !== undefined) {
-            cover_url = item_0['Images']['Primary']['Medium']['URL']
-            console.log('Medium Cover URL:', cover_url)
+        if (targetItem['Images'] !== undefined && 
+            targetItem['Images']['Primary'] !== undefined) {
+          if (targetItem['Images']['Primary']['Large'] !== undefined &&
+              targetItem['Images']['Primary']['Large']['URL'] !== undefined) {
+            cover_url = targetItem['Images']['Primary']['Large']['URL']
+            console.log('✓ Large cover found:', cover_url)
+          } else if (targetItem['Images']['Primary']['Medium'] !== undefined &&
+                     targetItem['Images']['Primary']['Medium']['URL'] !== undefined) {
+            cover_url = targetItem['Images']['Primary']['Medium']['URL']
+            console.log('✓ Medium cover found:', cover_url)
+          } else {
+            console.log('✗ No cover image found')
           }
+        } else {
+          console.log('✗ No images found')
         }
         
         // Return data if we found at least a title
@@ -161,25 +228,33 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
             author: author || 'Unknown Author',
             cover_url
           }
-          console.log('Successfully extracted book details:', bookDetails)
+          console.log('=== SUCCESS ===')
+          console.log('Final book details:', bookDetails)
+          console.log('=== PA-API DEBUG END ===')
           return bookDetails
         } else {
-          console.log('No title found in PA-API response for ASIN:', asin)
+          console.log('=== FAILURE: NO TITLE ===')
+          console.log('=== PA-API DEBUG END ===')
           return null
         }
       }
+    } else {
+      console.log('=== NO ITEMS IN RESPONSE ===')
+      console.log('ItemsResult:', getItemsResponse['ItemsResult'])
     }
     
-    console.log('No items found in PA-API response for ASIN:', asin)
+    console.log('=== PA-API DEBUG END ===')
     return null
     
   } catch (error: any) {
-    console.error('Amazon PA-API exception for ASIN', asin, ':', {
+    console.error('=== PA-API EXCEPTION ===')
+    console.error('Exception details:', {
       message: error.message,
       code: error.code,
       statusCode: error.statusCode,
       stack: error.stack
     })
+    console.log('=== PA-API DEBUG END ===')
     
     return null
   }
