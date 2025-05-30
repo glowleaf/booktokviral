@@ -100,7 +100,7 @@ export default async function WeeklyPage() {
                     <div className="flex-shrink-0">
                       <div className="relative w-16 h-24">
                         <Image
-                          src={book.cover_url || '/placeholder-book.svg'}
+                          src={book.cover_url || '/placeholder-book.png'}
                           alt={book.title || `Book ${book.asin}`}
                           fill
                           className="object-cover rounded"

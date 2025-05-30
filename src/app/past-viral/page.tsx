@@ -106,7 +106,7 @@ export default async function PastViralPage() {
                       <div className="flex flex-col items-center space-y-4">
                         <div className="relative w-24 h-36">
                           <Image
-                            src={book.cover_url || '/placeholder-book.svg'}
+                            src={book.cover_url || '/placeholder-book.png'}
                             alt={book.title || `Book ${book.asin}`}
                             fill
                             className="object-cover rounded"
@@ -174,7 +174,7 @@ export default async function PastViralPage() {
                         <div className="flex-shrink-0">
                           <div className="relative w-16 h-24">
                             <Image
-                              src={book.cover_url || '/placeholder-book.svg'}
+                              src={book.cover_url || '/placeholder-book.png'}
                               alt={book.title || `Book ${book.asin}`}
                               fill
                               className="object-cover rounded"
