@@ -68,24 +68,26 @@ export default function TikTokEmbed({ url, className = '', compact = false }: Ti
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-pink-600 hover:text-pink-700 text-sm flex items-center"
+          className="inline-flex items-center bg-gradient-to-r from-black via-gray-800 to-black text-white px-4 py-2 rounded-xl font-bold text-sm hover:scale-105 transform transition-all duration-300 shadow-lg border-2 border-pink-400"
         >
-          🎵 View on TikTok
+          🎵 WATCH ON TIKTOK! 🔥
         </a>
       )
     }
     
     return (
-      <div className={`p-4 bg-pink-50 rounded-lg ${className}`}>
-        <h4 className="font-semibold text-pink-900 mb-2">🎵 BookTok Video</h4>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-pink-600 hover:text-pink-700 underline"
-        >
-          Watch on TikTok →
-        </a>
+      <div className={`p-6 bg-gradient-to-r from-black via-gray-800 to-black rounded-2xl border-4 border-pink-400 shadow-2xl ${className}`}>
+        <h4 className="text-2xl font-black text-white mb-4 text-center">🎵 VIRAL BOOKTOK VIDEO! 🎵</h4>
+        <div className="text-center">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-black text-lg hover:scale-110 transform transition-all duration-300 shadow-xl border-4 border-white"
+          >
+            🚀 WATCH VIRAL VIDEO NOW! 🚀
+          </a>
+        </div>
       </div>
     )
   }
@@ -93,60 +95,62 @@ export default function TikTokEmbed({ url, className = '', compact = false }: Ti
   if (!isLoaded) {
     if (compact) {
       return (
-        <button
-          onClick={loadEmbed}
-          disabled={isLoading}
-          className="text-pink-600 hover:text-pink-700 text-sm flex items-center space-x-1"
-        >
-          {isLoading ? (
-            <>
-              <span className="animate-spin text-xs">⏳</span>
-              <span>Loading...</span>
-            </>
-          ) : (
-            <>
-              <span>▶️</span>
-              <span>Play TikTok</span>
-            </>
-          )}
-        </button>
+        <div className="mt-4 pt-4 border-t border-pink-200">
+          <div className="text-center">
+            <button
+              onClick={loadEmbed}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-black via-gray-800 to-black text-white px-6 py-3 rounded-2xl font-black text-lg hover:scale-110 transform transition-all duration-300 shadow-2xl border-4 border-pink-400 disabled:opacity-50 disabled:hover:scale-100"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <span className="animate-spin mr-2 text-xl">⏳</span>
+                  <span>LOADING VIRAL VIDEO...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center">
+                  <span className="mr-2 text-2xl animate-pulse">▶️</span>
+                  <span>🔥 PLAY VIRAL TIKTOK! 🔥</span>
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
       )
     }
     
     return (
-      <div className={`p-4 bg-pink-50 rounded-lg ${className}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-semibold text-pink-900 mb-1">🎵 BookTok Video</h4>
-            <p className="text-sm text-pink-700">Click to watch the TikTok video</p>
-          </div>
+      <div className={`p-6 bg-gradient-to-r from-black via-gray-800 to-black rounded-2xl border-4 border-pink-400 shadow-2xl ${className}`}>
+        <div className="text-center">
+          <h4 className="text-3xl font-black text-white mb-2">🎵 VIRAL BOOKTOK VIDEO! 🎵</h4>
+          <p className="text-lg text-gray-300 font-bold mb-6">🚨 CLICK TO WATCH THE VIRAL CONTENT! 🚨</p>
           <button
             onClick={loadEmbed}
             disabled={isLoading}
-            className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+            className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-10 py-5 rounded-2xl font-black text-xl hover:scale-110 transform transition-all duration-300 shadow-2xl border-4 border-white disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                <span>Loading...</span>
-              </>
+              <span className="flex items-center justify-center">
+                <span className="animate-spin mr-3 text-2xl">⏳</span>
+                <span>LOADING VIRAL VIDEO...</span>
+              </span>
             ) : (
-              <>
-                <span>▶️</span>
-                <span>Play Video</span>
-              </>
+              <span className="flex items-center justify-center">
+                <span className="mr-3 text-3xl animate-pulse">▶️</span>
+                <span>🚀 PLAY VIRAL VIDEO NOW! 🚀</span>
+              </span>
             )}
           </button>
-        </div>
-        <div className="mt-2">
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-pink-600 hover:text-pink-700 underline"
-          >
-            Or open in TikTok app →
-          </a>
+          <div className="mt-4">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-400 hover:text-pink-300 underline font-semibold"
+            >
+              Or open in TikTok app →
+            </a>
+          </div>
         </div>
       </div>
     )
@@ -154,58 +158,83 @@ export default function TikTokEmbed({ url, className = '', compact = false }: Ti
 
   if (compact) {
     return (
-      <div className="mt-4 pt-4 border-t">
-        <div className="flex justify-center">
-          <blockquote
-            className="tiktok-embed"
-            cite={url}
-            data-video-id={videoId}
-            style={{ maxWidth: '250px', minWidth: '250px' }}
-          >
-            <section>
-              <a
-                target="_blank"
-                title="@username"
-                href={url}
-                rel="noopener noreferrer"
-              >
-                View on TikTok
-              </a>
-            </section>
-          </blockquote>
+      <div className="mt-4 pt-4 border-t border-pink-200">
+        <div className="bg-gradient-to-r from-black via-gray-800 to-black rounded-2xl p-4 border-4 border-pink-400 shadow-2xl">
+          <h5 className="text-white font-black text-center mb-3">🎵 VIRAL BOOKTOK! 🎵</h5>
+          <div className="flex justify-center">
+            <div className="w-full max-w-[280px] mx-auto">
+              <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+                <blockquote
+                  className="tiktok-embed w-full h-full"
+                  cite={url}
+                  data-video-id={videoId}
+                  style={{ 
+                    maxWidth: '100%', 
+                    minWidth: '100%',
+                    height: '100%',
+                    border: 'none',
+                    borderRadius: '12px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <section>
+                    <a
+                      target="_blank"
+                      title="@username"
+                      href={url}
+                      rel="noopener noreferrer"
+                    >
+                      View on TikTok
+                    </a>
+                  </section>
+                </blockquote>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={`p-4 bg-pink-50 rounded-lg ${className}`}>
-      <h4 className="font-semibold text-pink-900 mb-3">🎵 BookTok Video</h4>
+    <div className={`p-6 bg-gradient-to-r from-black via-gray-800 to-black rounded-2xl border-4 border-pink-400 shadow-2xl ${className}`}>
+      <h4 className="text-3xl font-black text-white mb-4 text-center">🎵 VIRAL BOOKTOK VIDEO! 🎵</h4>
       <div className="flex justify-center">
-        <blockquote
-          className="tiktok-embed"
-          cite={url}
-          data-video-id={videoId}
-          style={{ maxWidth: '325px', minWidth: '325px' }}
-        >
-          <section>
-            <a
-              target="_blank"
-              title="@username"
-              href={url}
-              rel="noopener noreferrer"
+        <div className="w-full max-w-[350px] mx-auto">
+          <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+            <blockquote
+              className="tiktok-embed w-full h-full"
+              cite={url}
+              data-video-id={videoId}
+              style={{ 
+                maxWidth: '100%', 
+                minWidth: '100%',
+                height: '100%',
+                border: 'none',
+                borderRadius: '12px',
+                overflow: 'hidden'
+              }}
             >
-              View on TikTok
-            </a>
-          </section>
-        </blockquote>
+              <section>
+                <a
+                  target="_blank"
+                  title="@username"
+                  href={url}
+                  rel="noopener noreferrer"
+                >
+                  View on TikTok
+                </a>
+              </section>
+            </blockquote>
+          </div>
+        </div>
       </div>
-      <div className="mt-2 text-center">
+      <div className="mt-4 text-center">
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-pink-600 hover:text-pink-700 underline"
+          className="text-pink-400 hover:text-pink-300 underline font-semibold"
         >
           Open in TikTok app →
         </a>

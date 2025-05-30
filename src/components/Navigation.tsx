@@ -65,6 +65,12 @@ export default function Navigation() {
             <Link href="/weekly" className="text-gray-700 hover:text-pink-600">
               Weekly Leaderboard
             </Link>
+            <Link href="/past-viral" className="text-gray-700 hover:text-pink-600">
+              Past Viral
+            </Link>
+            <Link href="/faq" className="text-gray-700 hover:text-pink-600">
+              FAQ
+            </Link>
             <a 
               href="https://www.tiktok.com/@booktokviralcom" 
               target="_blank" 

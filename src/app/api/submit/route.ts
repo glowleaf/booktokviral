@@ -16,9 +16,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const asin = formData.get('asin') as string
     const tiktok_url = formData.get('tiktok_url') as string | null
-    const title = formData.get('title') as string | null
-    const author = formData.get('author') as string | null
-    const cover_url = formData.get('cover_url') as string | null
 
     if (!asin) {
       return new NextResponse('ASIN is required', { status: 400 })
@@ -40,12 +37,39 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Error creating user', { status: 500 })
     }
 
+    // Fetch book details from Amazon
+    let title = `Book ${asin}`
+    let author = 'Unknown Author'
+    let cover_url = null
+
+    try {
+      console.log('Fetching book details for ASIN:', asin)
+      const detailsResponse = await fetch(`${request.nextUrl.origin}/api/fetch-book-details`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asin })
+      })
+      
+      if (detailsResponse.ok) {
+        const details = await detailsResponse.json()
+        title = details.title || title
+        author = details.author || author
+        cover_url = details.cover_url || cover_url
+        console.log('Successfully fetched book details:', { title, author, cover_url })
+      } else {
+        console.log('Failed to fetch book details, using defaults')
+      }
+    } catch (error) {
+      console.error('Error fetching book details:', error)
+      console.log('Using default book details')
+    }
+
     // Prepare book data
     const bookData = {
       asin,
-      title: title || null,
-      author: author || null,
-      cover_url: cover_url || null,
+      title,
+      author,
+      cover_url,
       tiktok_url: tiktok_url || null,
       created_by: user.id,
     }
@@ -53,7 +77,7 @@ export async function POST(request: NextRequest) {
     console.log('Inserting book with data:', bookData)
 
     // Insert book with fetched details
-    const { error: bookError } = await supabase
+    const { data: book, error: bookError } = await supabase
       .from('books')
       .insert(bookData)
       .select()
@@ -70,8 +94,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Book submitted successfully:', asin)
 
-    // Redirect to success page
-    return NextResponse.redirect(new URL('/success', request.url), 303)
+    // Return success with book ID
+    return NextResponse.json({ success: true, bookId: book.id })
     
   } catch (error) {
     console.error('Error in submit API:', error)

@@ -2,11 +2,15 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import Image from 'next/image'
 import VoteButton from '@/components/VoteButton'
+import FeatureButton from '@/components/FeatureButton'
 import TikTokEmbed from '@/components/TikTokEmbed'
 import { Book } from '@/types/database'
 
 export default async function WeeklyPage() {
   const supabase = await createServerSupabaseClient()
+  
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
   
   // Get books with vote counts, ordered by votes
   const { data: books } = await supabase
@@ -28,33 +32,35 @@ export default async function WeeklyPage() {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            📊 Weekly Leaderboard
+          <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-pink-600 to-purple-700 mb-6 animate-pulse">
+            🏆 VIRAL LEADERBOARD 🏆
           </h1>
-          <p className="text-xl text-gray-600 mb-6">
-            See which books are trending this week on BookTok!
+          <p className="text-2xl text-gray-700 font-bold mb-6">
+            🔥 SEE WHICH BOOKS ARE ABSOLUTELY DOMINATING BOOKTOK RIGHT NOW! 🔥
           </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-2xl mx-auto">
-            <p className="text-yellow-800 text-sm">
-              🔄 Votes reset every Monday at midnight. Get your votes in before the week ends!
+          <div className="bg-gradient-to-r from-yellow-100 via-pink-100 to-purple-100 border-4 border-yellow-400 rounded-2xl p-6 max-w-3xl mx-auto shadow-2xl">
+            <p className="text-yellow-800 text-lg font-black">
+              ⚡ VOTES RESET EVERY MONDAY AT MIDNIGHT! ⚡
+              <br />
+              🚨 GET YOUR VOTES IN BEFORE THE WEEK ENDS! 🚨
             </p>
           </div>
         </div>
 
         {sortedBooks.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">📚</div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              No books submitted yet
+            <div className="text-8xl mb-6 animate-bounce">📚</div>
+            <h2 className="text-4xl font-black text-gray-900 mb-6">
+              🚨 NO BOOKS YET! 🚨
             </h2>
-            <p className="text-gray-600 mb-6">
-              Be the first to submit a book and start the leaderboard!
+            <p className="text-xl text-gray-700 font-bold mb-8">
+              BE THE FIRST TO SUBMIT A BOOK AND START THE VIRAL REVOLUTION! 🔥
             </p>
             <Link
               href="/submit"
-              className="bg-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-700 transition-colors"
+              className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-10 py-4 rounded-2xl text-xl font-black hover:scale-110 transform transition-all duration-300 shadow-2xl border-4 border-white"
             >
-              Submit First Book
+              🚀 SUBMIT FIRST VIRAL BOOK 🚀
             </Link>
           </div>
         ) : (
@@ -62,6 +68,8 @@ export default async function WeeklyPage() {
             {sortedBooks.map((book: Book, index: number) => {
               const voteCount = book.votes?.[0]?.count || 0
               const isTop3 = index < 3
+              const isOwner = user?.id && book.created_by === user.id
+              const isFeatured = book.featured_until && new Date(book.featured_until) > new Date()
               
               return (
                 <div
@@ -92,7 +100,7 @@ export default async function WeeklyPage() {
                     <div className="flex-shrink-0">
                       <div className="relative w-16 h-24">
                         <Image
-                          src={book.cover_url || '/placeholder-book.png'}
+                          src={book.cover_url || '/placeholder-book.svg'}
                           alt={book.title || `Book ${book.asin}`}
                           fill
                           className="object-cover rounded"
@@ -104,9 +112,9 @@ export default async function WeeklyPage() {
                     {/* Book Info */}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl font-semibold text-gray-900 truncate">
-                        {book.title || `Loading... ${book.asin}`}
+                        {book.title || `🔄 Loading Book ${book.asin}...`}
                       </h3>
-                      {book.author && (
+                      {book.author && book.author !== 'Unknown Author' && (
                         <p className="text-gray-600 mt-1">by {book.author}</p>
                       )}
                       <div className="flex items-center mt-2 space-x-4">
@@ -122,14 +130,27 @@ export default async function WeeklyPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex-shrink-0 flex items-center space-x-4">
-                      <VoteButton bookId={book.id} initialVotes={voteCount} />
-                      <Link
-                        href={`/books/${book.asin}`}
-                        className="text-pink-600 hover:text-pink-700 font-medium"
-                      >
-                        View Details →
-                      </Link>
+                    <div className="flex-shrink-0 flex flex-col items-end space-y-2">
+                      <div className="flex items-center space-x-4">
+                        <VoteButton bookId={book.id} initialVotes={voteCount} />
+                        <Link
+                          href={`/books/${book.asin}`}
+                          className="text-pink-600 hover:text-pink-700 font-medium"
+                        >
+                          View Details →
+                        </Link>
+                      </div>
+                      {/* Feature Button for Book Owner */}
+                      {isOwner && !isFeatured && (
+                        <div className="w-full max-w-[140px]">
+                          <FeatureButton bookId={book.id} />
+                        </div>
+                      )}
+                      {isOwner && isFeatured && (
+                        <div className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded text-center">
+                          ✨ Currently Featured
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -148,9 +169,9 @@ export default async function WeeklyPage() {
         <div className="text-center mt-12">
           <Link
             href="/submit"
-            className="bg-pink-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-pink-700 transition-colors"
+            className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-5 rounded-2xl text-2xl font-black hover:scale-110 transform transition-all duration-300 shadow-2xl border-4 border-white"
           >
-            Submit Your Book
+            🚀 SUBMIT YOUR VIRAL BOOK NOW! 🚀
           </Link>
         </div>
       </div>

@@ -106,7 +106,12 @@ export default function SubmitForm() {
       })
 
       if (response.ok) {
-        router.push('/success')
+        const result = await response.json()
+        if (result.success && result.bookId) {
+          router.push(`/success?bookId=${result.bookId}`)
+        } else {
+          router.push('/success')
+        }
       } else {
         const errorText = await response.text()
         setError(errorText || 'Failed to submit book')
@@ -169,21 +174,23 @@ export default function SubmitForm() {
       </div>
 
       {/* TikTok Follow Suggestion */}
-      <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
-        <h4 className="font-medium text-pink-900 mb-2 flex items-center">
-          🎵 Join Our BookTok Community!
+      <div className="p-6 bg-gradient-to-r from-black via-gray-800 to-black rounded-2xl border-4 border-pink-400 shadow-2xl">
+        <h4 className="text-2xl font-black text-white mb-3 flex items-center justify-center">
+          🎵 JOIN OUR VIRAL BOOKTOK COMMUNITY! 🎵
         </h4>
-        <p className="text-sm text-pink-800 mb-3">
-          Follow us on TikTok for the latest book trends, featured submissions, and BookTok content!
+        <p className="text-lg text-gray-300 font-bold mb-4 text-center">
+          🔥 Follow us for the HOTTEST book trends, featured submissions, and VIRAL BookTok content! 🔥
         </p>
-        <a
-          href="https://www.tiktok.com/@booktokviralcom"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center bg-pink-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-pink-700 transition-colors"
-        >
-          Follow @booktokviralcom →
-        </a>
+        <div className="text-center">
+          <a
+            href="https://www.tiktok.com/@booktokviralcom"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-black text-lg hover:scale-110 transform transition-all duration-300 shadow-xl border-4 border-white"
+          >
+            🚀 FOLLOW @booktokviralcom NOW! 🚀
+          </a>
+        </div>
       </div>
 
       {/* Amazon Affiliate Disclosure */}
@@ -217,15 +224,15 @@ export default function SubmitForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-pink-600 text-white py-3 px-4 rounded-md font-medium hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-4 px-6 rounded-2xl text-xl font-black hover:scale-105 transform transition-all duration-300 shadow-2xl border-4 border-white focus:outline-none focus:ring-4 focus:ring-pink-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
       >
         {isSubmitting ? (
           <span className="flex items-center justify-center">
-            <span className="animate-spin mr-2">⏳</span>
-            Submitting...
+            <span className="animate-spin mr-3 text-2xl">⏳</span>
+            <span>SUBMITTING VIRAL BOOK...</span>
           </span>
         ) : (
-          'Submit Book'
+          '🚀 SUBMIT VIRAL BOOK NOW! 🚀'
         )}
       </button>
     </form>

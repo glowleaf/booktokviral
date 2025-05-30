@@ -81,19 +81,21 @@ export default function FeatureButton({ bookId }: FeatureButtonProps) {
       <button
         onClick={handleFeature}
         disabled={isLoading}
-        className="bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full"
+        className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 text-white text-xl font-black px-8 py-4 rounded-2xl shadow-2xl hover:scale-105 transform transition-all duration-300 border-4 border-white w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
       >
         {isLoading ? (
           <span className="flex items-center justify-center">
-            <span className="animate-spin mr-2">⏳</span>
-            Processing...
+            <span className="animate-spin mr-2 text-2xl">⏳</span>
+            PROCESSING...
           </span>
         ) : (
-          'Feature for $9.99'
+          '🚀 FEATURE MY BOOK - $9.99 🚀'
         )}
       </button>
       {error && (
-        <p className="text-red-600 text-xs mt-2">{error}</p>
+        <div className="bg-red-100 border-2 border-red-400 text-red-800 px-4 py-3 rounded-lg mt-3 text-center font-semibold">
+          ⚠️ {error}
+        </div>
       )}
     </div>
   )
