@@ -40,6 +40,7 @@ export default function AdminDashboard() {
   const [books, setBooks] = useState<Book[]>([])
   const [stats, setStats] = useState<DashboardStats[]>([])
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'books'>('overview')
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -59,26 +60,38 @@ export default function AdminDashboard() {
       setUser(user)
       
       // Check if user has admin privileges in database
-      const { data: userData } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('is_admin')
         .eq('id', user.id)
         .single()
+
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error checking admin status:', userError)
+        setError('Failed to check admin status')
+        return
+      }
 
       if (userData?.is_admin) {
         setIsAdmin(true)
         loadDashboardData()
       } else {
         // Set admin status for glowleaf@gmail.com if not already set
-        await supabase.rpc('set_admin_status', {
-          user_email: 'glowleaf@gmail.com',
-          admin_status: true
-        })
-        setIsAdmin(true)
-        loadDashboardData()
+        try {
+          await supabase.rpc('set_admin_status', {
+            user_email: 'glowleaf@gmail.com',
+            admin_status: true
+          })
+          setIsAdmin(true)
+          loadDashboardData()
+        } catch (rpcError) {
+          console.error('Error setting admin status:', rpcError)
+          setError('Failed to set admin status')
+        }
       }
     } catch (error) {
       console.error('Admin access check failed:', error)
+      setError('Admin access check failed')
       router.push('/')
     } finally {
       setLoading(false)
@@ -87,40 +100,57 @@ export default function AdminDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      // Load stats
-      const { data: statsData } = await supabase
-        .from('admin_dashboard')
-        .select('*')
+      // Load stats using the new function
+      const { data: statsData, error: statsError } = await supabase.rpc('get_admin_stats')
       
-      if (statsData) setStats(statsData)
+      if (statsError) {
+        console.error('Error loading stats:', statsError)
+      } else if (statsData) {
+        setStats(statsData)
+      }
 
       // Load users
-      const { data: usersData } = await supabase
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false })
       
-      if (usersData) setUsers(usersData)
+      if (usersError) {
+        console.error('Error loading users:', usersError)
+      } else if (usersData) {
+        setUsers(usersData)
+      }
 
       // Load books
-      const { data: booksData } = await supabase
+      const { data: booksData, error: booksError } = await supabase
         .from('books')
         .select('*')
         .order('created_at', { ascending: false })
       
-      if (booksData) setBooks(booksData)
+      if (booksError) {
+        console.error('Error loading books:', booksError)
+      } else if (booksData) {
+        setBooks(booksData)
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
+      setError('Failed to load dashboard data')
     }
   }
 
   const moderateUser = async (userId: string, block: boolean, reason?: string) => {
     try {
-      await supabase.rpc('moderate_user', {
+      const { error } = await supabase.rpc('moderate_user', {
         target_user_id: userId,
         block_status: block,
         reason: reason || null
       })
+      
+      if (error) {
+        console.error('Error moderating user:', error)
+        alert('Failed to moderate user: ' + error.message)
+        return
+      }
       
       loadDashboardData() // Refresh data
       alert(`User ${block ? 'blocked' : 'unblocked'} successfully`)
@@ -132,12 +162,18 @@ export default function AdminDashboard() {
 
   const moderateBook = async (bookId: string, approved?: boolean, hidden?: boolean, notes?: string) => {
     try {
-      await supabase.rpc('moderate_book', {
+      const { error } = await supabase.rpc('moderate_book', {
         book_id: bookId,
         approved,
         hidden,
         notes
       })
+      
+      if (error) {
+        console.error('Error moderating book:', error)
+        alert('Failed to moderate book: ' + error.message)
+        return
+      }
       
       loadDashboardData() // Refresh data
       alert('Book moderated successfully')
@@ -153,6 +189,23 @@ export default function AdminDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Checking admin access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Error</h1>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={() => router.push('/')}
+            className="mt-4 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600"
+          >
+            Back to Site
+          </button>
         </div>
       </div>
     )
@@ -215,7 +268,7 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {stats.map((stat) => (
+            {stats.length > 0 ? stats.map((stat) => (
               <div key={stat.type} className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-900 capitalize mb-2">
                   {stat.type}
@@ -230,7 +283,11 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="col-span-3 text-center py-8">
+                <p className="text-gray-500">Loading statistics...</p>
+              </div>
+            )}
           </div>
         )}
 
