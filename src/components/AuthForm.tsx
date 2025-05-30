@@ -15,7 +15,7 @@ export default function AuthForm() {
 
   const supabase = createClient()
 
-  const handleSocialSignIn = async (provider: 'google' | 'discord' | 'twitter' | 'facebook' | 'apple') => {
+  const handleSocialSignIn = async (provider: 'google' | 'discord' | 'twitter' | 'facebook') => {
     if (!supabase) {
       setMessage('Authentication service unavailable')
       return
@@ -176,17 +176,6 @@ export default function AuthForm() {
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
             Facebook
-          </button>
-
-          <button
-            onClick={() => handleSocialSignIn('apple')}
-            disabled={isLoading}
-            className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors col-span-2"
-          >
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12.017 0C8.396 0 8.025.044 8.025.044v4.18c0 .317.255.572.572.572h2.729c.317 0 .572-.255.572-.572V.044S11.638 0 12.017 0zm0 5.79c-3.396 0-6.154 2.758-6.154 6.154 0 3.396 2.758 6.154 6.154 6.154 3.396 0 6.154-2.758 6.154-6.154 0-3.396-2.758-6.154-6.154-6.154zm0 10.944c-2.639 0-4.79-2.151-4.79-4.79s2.151-4.79 4.79-4.79 4.79 2.151 4.79 4.79-2.151 4.79-4.79 4.79z"/>
-            </svg>
-            Sign in with Apple
           </button>
         </div>
       </div>
