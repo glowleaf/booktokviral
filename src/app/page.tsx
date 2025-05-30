@@ -126,10 +126,6 @@ function BookCard({ book, featured = false }: { book: Book, featured?: boolean }
               fill
               className="object-cover rounded"
               sizes="64px"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = '/placeholder-book.png'
-              }}
             />
           </div>
           <div className="flex-1 min-w-0">

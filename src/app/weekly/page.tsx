@@ -95,12 +95,8 @@ export default async function WeeklyPage() {
                           src={book.cover_url || '/placeholder-book.png'}
                           alt={book.title || `Book ${book.asin}`}
                           fill
-                          className="object-cover rounded shadow-sm"
+                          className="object-cover rounded"
                           sizes="64px"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = '/placeholder-book.png'
-                          }}
                         />
                       </div>
                     </div>

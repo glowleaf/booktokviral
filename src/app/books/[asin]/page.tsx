@@ -120,10 +120,6 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     className="object-cover rounded-lg shadow-md"
                     sizes="(max-width: 768px) 100vw, 33vw"
                     priority
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = '/placeholder-book.png'
-                    }}
                   />
                 </div>
               </div>
