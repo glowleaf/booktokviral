@@ -101,6 +101,10 @@ export default function FAQPage() {
       answer: "Nope! Each book (ASIN) can only be submitted once to keep things fair. But you can submit as many different books as you want! Quality over quantity is the key to viral success."
     },
     {
+      question: "📚 I'm not the author but I just love this book, can I submit it?",
+      answer: "YES! BookTok Viral is for ALL book lovers, not just authors! If you've read an amazing book and want to help it go viral, absolutely submit it. Share your TikTok review, get people voting, and help spread the BookTok love! The best book recommendations often come from passionate readers."
+    },
+    {
       question: "💡 What makes a book go viral on BookTok?",
       answer: "Great TikTok videos, engaging book covers, compelling stories, and community voting! Books with TikTok links perform way better. The more people vote for your book, the higher it ranks!"
     },
