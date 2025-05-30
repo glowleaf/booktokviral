@@ -3,16 +3,19 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 export default function Navigation() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
+    if (!supabase) return
+    
     checkUser()
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (session?.user) {
         setUser(session.user)
         checkAdminStatus(session.user)
@@ -26,6 +29,8 @@ export default function Navigation() {
   }, [])
 
   const checkUser = async () => {
+    if (!supabase) return
+    
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUser(user)
@@ -33,7 +38,7 @@ export default function Navigation() {
     }
   }
 
-  const checkAdminStatus = async (user: any) => {
+  const checkAdminStatus = async (user: User) => {
     if (user?.email === 'glowleaf@gmail.com') {
       setIsAdmin(true)
     }

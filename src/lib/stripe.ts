@@ -20,7 +20,7 @@ const createStripeInstance = () => {
   
   try {
     return require('stripe')(secretKey, {
-      apiVersion: '2024-06-20',
+      apiVersion: '2025-05-28.basil',
     })
   } catch (error) {
     console.error('Error creating Stripe instance:', error)
