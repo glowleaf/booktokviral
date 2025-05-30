@@ -15,15 +15,10 @@ const MARKETPLACES = {
   'DE': { host: 'webservices.amazon.de', region: 'eu-west-1', marketplace: 'www.amazon.de' },
 }
 
-// Dynamic import function that only runs on server at runtime
+// Dynamic import function that works in production
 async function loadAmazonSDK() {
-  // Only load on server side and never during build
+  // Only load on server side
   if (typeof window !== 'undefined') {
-    return null
-  }
-  
-  // Skip during build process
-  if (process.env.NODE_ENV !== 'development' && !process.env.VERCEL_ENV) {
     return null
   }
   
