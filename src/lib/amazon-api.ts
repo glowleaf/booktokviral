@@ -13,11 +13,11 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
 
     // Validate environment variables
     if (!process.env.AMAZON_ACCESS_KEY || !process.env.AMAZON_SECRET_KEY || !process.env.AMAZON_PARTNER_TAG) {
-      console.error('Missing Amazon API credentials. Required: AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, AMAZON_PARTNER_TAG')
+      console.error('Missing Amazon API credentials')
       return null
     }
 
-    // Initialize the API client
+    // Initialize the API client with proper configuration
     const defaultClient = ProductAdvertisingAPIv1.ApiClient.instance
     defaultClient.accessKey = process.env.AMAZON_ACCESS_KEY
     defaultClient.secretKey = process.env.AMAZON_SECRET_KEY
@@ -26,7 +26,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
 
     const api = new ProductAdvertisingAPIv1.DefaultApi()
 
-    // Create the request according to PA-API 5.0 documentation
+    // Create the request with proper structure
     const getItemsRequest = new ProductAdvertisingAPIv1.GetItemsRequest()
     getItemsRequest.partnerTag = process.env.AMAZON_PARTNER_TAG
     getItemsRequest.partnerType = ProductAdvertisingAPIv1.PartnerType.Associates
@@ -34,7 +34,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     getItemsRequest.itemIds = [asin]
     getItemsRequest.itemIdType = ProductAdvertisingAPIv1.ItemIdType.ASIN
     
-    // Request specific resources as per documentation
+    // Request essential resources
     getItemsRequest.resources = [
       'Images.Primary.Large',
       'Images.Primary.Medium',
@@ -42,51 +42,49 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
       'ItemInfo.ByLineInfo'
     ]
 
-    console.log('Making PA-API request with credentials and partner tag:', {
-      hasAccessKey: !!process.env.AMAZON_ACCESS_KEY,
-      hasSecretKey: !!process.env.AMAZON_SECRET_KEY,
-      partnerTag: process.env.AMAZON_PARTNER_TAG,
-      marketplace: getItemsRequest.marketplace,
-      itemIds: getItemsRequest.itemIds,
-      resources: getItemsRequest.resources
-    })
+    console.log('Making PA-API request for ASIN:', asin)
 
+    // Make the API call with proper error handling
     const response = await new Promise((resolve, reject) => {
-      api.getItems(getItemsRequest, (error: any, data: any) => {
+      api.getItems(getItemsRequest, (error: any, data: any, response: any) => {
         if (error) {
-          console.error('Amazon PA-API callback error:', {
+          console.error('PA-API Error:', {
             message: error.message,
             code: error.code,
             statusCode: error.statusCode,
-            response: error.response?.data || error.response
+            responseBody: error.response
           })
-          reject(error)
+          resolve(null)
         } else {
-          console.log('Amazon PA-API response received successfully')
+          console.log('PA-API Success - Raw response:', JSON.stringify(data, null, 2))
           resolve(data)
         }
       })
     })
 
+    if (!response) {
+      console.log('PA-API returned null/error for ASIN:', asin)
+      return null
+    }
+
     const responseData = response as any
-    console.log('PA-API Full Response:', JSON.stringify(responseData, null, 2))
     
-    // Handle errors in response
+    // Check for API errors in response
     if (responseData.Errors && responseData.Errors.length > 0) {
-      console.error('PA-API returned errors:', responseData.Errors)
+      console.error('PA-API Response Errors:', responseData.Errors)
       return null
     }
     
     // Process successful response
     if (responseData.ItemsResult?.Items && responseData.ItemsResult.Items.length > 0) {
       const item = responseData.ItemsResult.Items[0]
-      console.log('Processing item data:', JSON.stringify(item, null, 2))
+      console.log('Processing item:', JSON.stringify(item, null, 2))
       
       // Extract title
       let title = null
       if (item.ItemInfo?.Title?.DisplayValue) {
         title = item.ItemInfo.Title.DisplayValue
-        console.log('Found title:', title)
+        console.log('Extracted title:', title)
       }
       
       // Extract author
@@ -95,24 +93,24 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
         const contributor = item.ItemInfo.ByLineInfo.Contributors[0]
         if (contributor.Name) {
           author = contributor.Name
-          console.log('Found author:', author)
+          console.log('Extracted author:', author)
         }
       } else if (item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue) {
         author = item.ItemInfo.ByLineInfo.Brand.DisplayValue
-        console.log('Found brand as author:', author)
+        console.log('Extracted brand as author:', author)
       }
       
       // Extract cover image
       let cover_url = null
       if (item.Images?.Primary?.Large?.URL) {
         cover_url = item.Images.Primary.Large.URL
-        console.log('Found large cover:', cover_url)
+        console.log('Extracted large cover:', cover_url)
       } else if (item.Images?.Primary?.Medium?.URL) {
         cover_url = item.Images.Primary.Medium.URL
-        console.log('Found medium cover:', cover_url)
+        console.log('Extracted medium cover:', cover_url)
       }
       
-      // Only return data if we found at least a title
+      // Return data if we found at least a title
       if (title) {
         const bookDetails = {
           title,
@@ -122,7 +120,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
         console.log('Successfully extracted book details:', bookDetails)
         return bookDetails
       } else {
-        console.log('No title found in PA-API response')
+        console.log('No title found in PA-API response for ASIN:', asin)
         return null
       }
     }
@@ -131,7 +129,7 @@ export async function getBookDetails(asin: string): Promise<BookDetails | null> 
     return null
     
   } catch (error: any) {
-    console.error('Amazon PA-API error for ASIN', asin, ':', {
+    console.error('Amazon PA-API exception for ASIN', asin, ':', {
       message: error.message,
       code: error.code,
       statusCode: error.statusCode,
