@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const asin = formData.get('asin') as string
     const tiktok_url = formData.get('tiktok_url') as string | null
+    const title = formData.get('title') as string | null
+    const author = formData.get('author') as string | null
+    const cover_url = formData.get('cover_url') as string | null
 
     if (!asin) {
       return new NextResponse('ASIN is required', { status: 400 })
@@ -37,15 +40,22 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Error creating user', { status: 500 })
     }
 
-    // Insert book with placeholder title
+    // Prepare book data
+    const bookData = {
+      asin,
+      title: title || null,
+      author: author || null,
+      cover_url: cover_url || null,
+      tiktok_url: tiktok_url || null,
+      created_by: user.id,
+    }
+
+    console.log('Inserting book with data:', bookData)
+
+    // Insert book with fetched details
     const { error: bookError } = await supabase
       .from('books')
-      .insert({
-        asin,
-        title: `(loading...) ${asin}`,
-        tiktok_url: tiktok_url || null,
-        created_by: user.id,
-      })
+      .insert(bookData)
       .select()
       .single()
 
@@ -57,6 +67,8 @@ export async function POST(request: NextRequest) {
       console.error('Error inserting book:', bookError)
       return new NextResponse('Error submitting book', { status: 500 })
     }
+
+    console.log('Book submitted successfully:', asin)
 
     // Redirect to success page
     return NextResponse.redirect(new URL('/success', request.url), 303)

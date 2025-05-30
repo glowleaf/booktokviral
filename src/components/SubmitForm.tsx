@@ -1,13 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+
+interface BookDetails {
+  title: string | null
+  author: string | null
+  cover_url: string | null
+  asin: string
+  error?: string
+}
 
 export default function SubmitForm() {
   const [asin, setAsin] = useState('')
   const [tiktokUrl, setTiktokUrl] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false)
+  const [bookDetails, setBookDetails] = useState<BookDetails | null>(null)
   const [error, setError] = useState('')
   const router = useRouter()
 
@@ -16,6 +27,51 @@ export default function SubmitForm() {
     const asinRegex = /^[A-Z0-9]{10}$/
     return asinRegex.test(asin.toUpperCase())
   }
+
+  // Auto-fetch book details when ASIN is entered
+  useEffect(() => {
+    const fetchBookDetails = async () => {
+      if (!asin || !validateASIN(asin)) {
+        setBookDetails(null)
+        return
+      }
+
+      setIsFetchingDetails(true)
+      setError('')
+
+      try {
+        const response = await fetch('/api/fetch-book-details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ asin: asin.toUpperCase() }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          setBookDetails(data)
+          if (data.error) {
+            setError(`Warning: ${data.error}`)
+          }
+        } else {
+          setError(data.error || 'Failed to fetch book details')
+          setBookDetails(null)
+        }
+      } catch (err) {
+        console.error('Error fetching book details:', err)
+        setError('Failed to fetch book details')
+        setBookDetails(null)
+      }
+
+      setIsFetchingDetails(false)
+    }
+
+    // Debounce the API call
+    const timeoutId = setTimeout(fetchBookDetails, 1000)
+    return () => clearTimeout(timeoutId)
+  }, [asin])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,6 +101,13 @@ export default function SubmitForm() {
         formData.append('tiktok_url', tiktokUrl.trim())
       }
 
+      // Include fetched book details if available
+      if (bookDetails) {
+        if (bookDetails.title) formData.append('title', bookDetails.title)
+        if (bookDetails.author) formData.append('author', bookDetails.author)
+        if (bookDetails.cover_url) formData.append('cover_url', bookDetails.cover_url)
+      }
+
       const response = await fetch('/api/submit', {
         method: 'POST',
         body: formData,
@@ -66,7 +129,11 @@ export default function SubmitForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className={`border px-4 py-3 rounded ${
+          error.startsWith('Warning:') 
+            ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
+            : 'bg-red-50 border-red-200 text-red-700'
+        }`}>
           {error}
         </div>
       )}
@@ -88,7 +155,43 @@ export default function SubmitForm() {
         <p className="text-xs text-gray-500 mt-1">
           10-character code from Amazon book page
         </p>
+        
+        {isFetchingDetails && (
+          <div className="mt-2 flex items-center text-sm text-gray-600">
+            <span className="animate-spin mr-2">⏳</span>
+            Fetching book details...
+          </div>
+        )}
       </div>
+
+      {/* Book Preview */}
+      {bookDetails && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <h4 className="font-medium text-green-900 mb-3">📖 Book Preview</h4>
+          <div className="flex items-start space-x-4">
+            {bookDetails.cover_url && (
+              <div className="relative w-16 h-24 flex-shrink-0">
+                <Image
+                  src={bookDetails.cover_url}
+                  alt={bookDetails.title || 'Book cover'}
+                  fill
+                  className="object-cover rounded"
+                  sizes="64px"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h5 className="font-semibold text-gray-900">
+                {bookDetails.title || 'Title not available'}
+              </h5>
+              {bookDetails.author && (
+                <p className="text-gray-600 text-sm mt-1">by {bookDetails.author}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-2">ASIN: {bookDetails.asin}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div>
         <label htmlFor="tiktok_url" className="block text-sm font-medium text-gray-700 mb-2">
@@ -155,13 +258,18 @@ export default function SubmitForm() {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isFetchingDetails}
         className="w-full bg-pink-600 text-white py-3 px-4 rounded-md font-medium hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isSubmitting ? (
           <span className="flex items-center justify-center">
             <span className="animate-spin mr-2">⏳</span>
             Submitting...
+          </span>
+        ) : isFetchingDetails ? (
+          <span className="flex items-center justify-center">
+            <span className="animate-spin mr-2">⏳</span>
+            Loading book details...
           </span>
         ) : (
           'Submit Book'
