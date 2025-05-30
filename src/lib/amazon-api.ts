@@ -1,4 +1,5 @@
 const ProductAdvertisingAPIv1 = require('paapi5-nodejs-sdk')
+import { getFallbackBookData } from './book-data-fallback'
 
 // Updated with new credentials - 2025-01-30
 export interface BookDetails {
@@ -16,6 +17,13 @@ const MARKETPLACES = {
 }
 
 export async function getBookDetails(asin: string): Promise<BookDetails | null> {
+  // Check fallback data first
+  const fallbackData = getFallbackBookData(asin)
+  if (fallbackData) {
+    console.log('[Amazon API] Using fallback data for ASIN:', asin)
+    return fallbackData
+  }
+
   try {
     console.log('[Amazon API] ============================================')
     console.log('[Amazon API] Starting request for ASIN:', asin)
