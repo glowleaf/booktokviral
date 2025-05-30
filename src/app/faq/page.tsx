@@ -50,7 +50,7 @@ export default function FAQPage() {
   const faqData = [
     {
       question: "🚀 What is BookTok Viral?",
-      answer: "BookTok Viral is the ultimate platform for discovering and promoting viral books on TikTok! Think of it as the TinyLaunch for books - submit your favorite reads, vote for amazing books, and watch them climb the weekly leaderboard to BookTok fame!"
+      answer: "BookTok Viral is the BookBub of BookTok! Just like BookBub helps readers discover amazing books and deals, we help the TikTok generation find their next viral read. Submit books, vote for favorites, and watch them climb our weekly leaderboard to BookTok fame!"
     },
     {
       question: "📚 How do I submit a book?",
@@ -117,6 +117,10 @@ export default function FAQPage() {
       answer: "Don't give up! Share your book submission on your social media, ask friends to vote, and make sure you have an engaging TikTok video. Sometimes it takes time to build momentum - keep promoting!"
     },
     {
+      question: "🤔 How is this different from BookBub?",
+      answer: "BookBub focuses on email newsletters and deals for traditional readers. We're the BookBub for the TikTok generation! We focus on viral discovery, social voting, weekly competitions, and helping books explode on TikTok through community engagement."
+    },
+    {
       question: "📧 How do I contact support?",
       answer: "For any questions, issues, or suggestions, you can reach out through our TikTok @booktokviralcom or check back here for updates. We're always working to make BookTok Viral even better!"
     }
@@ -131,11 +135,11 @@ export default function FAQPage() {
             ❓ FREQUENTLY ASKED QUESTIONS ❓
           </h1>
           <p className="text-2xl text-gray-700 font-bold mb-6">
-            🔥 EVERYTHING YOU NEED TO KNOW ABOUT BOOKTOK VIRAL! 🔥
+            🔥 THE BOOKBUB OF BOOKTOK - EVERYTHING YOU NEED TO KNOW! 🔥
           </p>
           <div className="bg-gradient-to-r from-pink-100 via-purple-100 to-yellow-100 border-4 border-pink-400 rounded-2xl p-6 max-w-3xl mx-auto shadow-2xl">
             <p className="text-pink-800 text-lg font-black">
-              💡 GOT QUESTIONS? WE'VE GOT ANSWERS! 💡
+              💡 DISCOVER YOUR NEXT VIRAL READ! 💡
               <br />
               🚨 Click any question below to reveal the answer! 🚨
             </p>
