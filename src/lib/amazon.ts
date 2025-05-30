@@ -3,7 +3,7 @@
  * Generates Amazon links with affiliate tag for monetization
  */
 
-const AMAZON_AFFILIATE_TAG = process.env.NEXT_PUBLIC_AMAZON_AFFILIATE_TAG || 'booktokviral-20'
+const AMAZON_AFFILIATE_TAG = 'booktokviral-20'
 
 /**
  * Generate Amazon affiliate link for a given ASIN
