@@ -100,7 +100,7 @@ export default async function Home() {
             <p className="text-xl font-bold text-gray-700 mb-6">
               Premium visibility for your book. Limited spots available.
             </p>
-            <Link
+            <Link 
               href="/submit"
               className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-2xl text-xl font-black hover:scale-110 transform transition-all duration-300 shadow-2xl border-4 border-white mr-4"
             >
@@ -133,10 +133,10 @@ export default async function Home() {
                   position={index + 1}
                   currentUserId={user?.id}
                 />
-              ))}
-            </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
         {/* All Other Books */}
         {otherBooks.length > 0 && (
@@ -308,18 +308,18 @@ function WinnerCard({ book, position, currentUserId }: { book: Book, position: n
       </div>
       <div className="flex flex-col items-center space-y-4">
         <div className="relative w-24 h-36">
-          <Image
-            src={book.cover_url || '/placeholder-book.png'}
-            alt={book.title || `Book ${book.asin}`}
-            fill
-            className="object-cover rounded"
+            <Image
+              src={book.cover_url || '/placeholder-book.png'}
+              alt={book.title || `Book ${book.asin}`}
+              fill
+              className="object-cover rounded"
             sizes="96px"
-          />
-        </div>
+            />
+          </div>
         <div className="text-center">
           <h3 className="text-lg font-bold text-gray-900">
             {book.title || `🔄 Loading Book ${book.asin}...`}
-          </h3>
+            </h3>
           {book.author && book.author !== 'Unknown Author' && (
             <p className="text-gray-600 text-sm">by {book.author}</p>
           )}

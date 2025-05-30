@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getBookDetails } from '@/lib/amazon-api'
 
+// Force deployment update with new credentials - 2025-01-30
 export async function POST(request: NextRequest) {
   try {
     const { asin } = await request.json()
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     let updated = 0
+    const debugInfo = []
     
     for (const book of books) {
       try {
@@ -63,6 +65,17 @@ export async function GET(request: NextRequest) {
         
         // Fetch details using Amazon PA-API
         const details = await getBookDetails(book.asin)
+        
+        // Add debug info
+        debugInfo.push({
+          asin: book.asin,
+          amazonApiResponse: details,
+          currentBookData: {
+            title: book.title,
+            author: book.author,
+            cover_url: book.cover_url
+          }
+        })
         
         if (details) {
           // Update the book with new details
@@ -88,12 +101,17 @@ export async function GET(request: NextRequest) {
         
       } catch (error) {
         console.error(`Error updating book ${book.asin}:`, error)
+        debugInfo.push({
+          asin: book.asin,
+          error: error instanceof Error ? error.message : String(error)
+        })
       }
     }
     
     return NextResponse.json({ 
       message: `Updated ${updated} books using Amazon PA-API`,
-      processed: books.length 
+      processed: books.length,
+      debugInfo: debugInfo
     })
     
   } catch (error) {
