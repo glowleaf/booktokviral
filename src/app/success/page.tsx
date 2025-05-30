@@ -74,7 +74,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
             <div className="flex justify-center mb-8">
               <div className="relative">
                 <Image
-                  src="/featured-booktok-viral.svg"
+                  src="/featured-booktok-viral.png"
                   alt="Featured BookTok Viral Promotion"
                   width={400}
                   height={300}
