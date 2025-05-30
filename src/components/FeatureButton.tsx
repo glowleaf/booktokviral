@@ -25,7 +25,7 @@ export default function FeatureButton({ bookId }: FeatureButtonProps) {
       
       if (!user) return
 
-      const { data: subscription } = await supabase
+      const { data: subscription, error } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('book_id', bookId)
@@ -33,9 +33,17 @@ export default function FeatureButton({ bookId }: FeatureButtonProps) {
         .eq('status', 'active')
         .single()
 
+      if (error) {
+        // If the table doesn't exist or other error, just continue without subscription check
+        console.log('Could not check subscription status (table may not exist yet):', error)
+        setHasActiveSubscription(false)
+        return
+      }
+
       setHasActiveSubscription(!!subscription)
     } catch (error) {
       console.error('Error checking subscription:', error)
+      setHasActiveSubscription(false)
     }
   }
 
