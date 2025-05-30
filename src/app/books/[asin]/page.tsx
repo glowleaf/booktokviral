@@ -1,0 +1,177 @@
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
+import VoteButton from '@/components/VoteButton'
+import FeatureButton from '@/components/FeatureButton'
+
+interface BookPageProps {
+  params: Promise<{
+    asin: string
+  }>
+}
+
+export default async function BookPage({ params }: BookPageProps) {
+  const { asin } = await params
+  const supabase = await createServerSupabaseClient()
+  
+  // Get book details with vote count
+  const { data: book } = await supabase
+    .from('books')
+    .select(`
+      *,
+      votes(count)
+    `)
+    .eq('asin', asin)
+    .single()
+
+  if (!book) {
+    notFound()
+  }
+
+  const voteCount = book.votes?.[0]?.count || 0
+  const isFeatured = book.featured_until && new Date(book.featured_until) > new Date()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {isFeatured && (
+            <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-center py-3">
+              <span className="text-lg font-semibold">⭐ FEATURED BOOK</span>
+            </div>
+          )}
+          
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Book Cover */}
+              <div className="md:col-span-1">
+                <div className="relative w-full max-w-sm mx-auto aspect-[2/3]">
+                  <Image
+                    src={book.cover_url || '/placeholder-book.png'}
+                    alt={book.title || `Book ${book.asin}`}
+                    fill
+                    className="object-cover rounded-lg shadow-md"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    priority
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = '/placeholder-book.png'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Book Details */}
+              <div className="md:col-span-2">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    {book.title || `Loading... ${book.asin}`}
+                  </h1>
+                  {book.author && (
+                    <p className="text-xl text-gray-600 mb-4">by {book.author}</p>
+                  )}
+                  
+                  <div className="flex items-center space-x-4 mb-6">
+                    <VoteButton bookId={book.id} initialVotes={voteCount} />
+                    <span className="text-gray-500">•</span>
+                    <span className="text-sm text-gray-500">ASIN: {book.asin}</span>
+                  </div>
+                </div>
+
+                {/* TikTok Video */}
+                {book.tiktok_url && (
+                  <div className="mb-6 p-4 bg-pink-50 rounded-lg">
+                    <h3 className="font-semibold text-pink-900 mb-2">
+                      🎵 BookTok Video
+                    </h3>
+                    <a
+                      href={book.tiktok_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-pink-600 hover:text-pink-700 underline"
+                    >
+                      Watch on TikTok →
+                    </a>
+                  </div>
+                )}
+
+                {/* Amazon Link */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">
+                    📚 Get This Book
+                  </h3>
+                  <a
+                    href={`https://www.amazon.com/dp/${book.asin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-block"
+                  >
+                    View on Amazon
+                  </a>
+                </div>
+
+                {/* Feature This Book */}
+                <div className="p-4 bg-yellow-50 rounded-lg">
+                  <h3 className="font-semibold text-yellow-900 mb-2">
+                    💎 Feature This Book
+                  </h3>
+                  <p className="text-sm text-yellow-800 mb-3">
+                    Feature this book at the top of the homepage for 7 days and get more votes!
+                  </p>
+                  <FeatureButton bookId={book.id} />
+                </div>
+              </div>
+            </div>
+
+            {/* Book Stats */}
+            <div className="mt-8 pt-8 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-gray-900">{voteCount}</div>
+                  <div className="text-sm text-gray-600">Total Votes</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {new Date(book.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="text-sm text-gray-600">Date Added</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {isFeatured ? 'Yes' : 'No'}
+                  </div>
+                  <div className="text-sm text-gray-600">Currently Featured</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="mt-8 text-center space-x-4">
+          <Link
+            href="/"
+            className="text-gray-600 hover:text-pink-600 transition-colors"
+          >
+            ← Back to Homepage
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link
+            href="/weekly"
+            className="text-gray-600 hover:text-pink-600 transition-colors"
+          >
+            View Leaderboard
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link
+            href="/submit"
+            className="text-gray-600 hover:text-pink-600 transition-colors"
+          >
+            Submit Another Book
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+} 
