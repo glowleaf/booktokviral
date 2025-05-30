@@ -1,5 +1,7 @@
 # BookTok Viral
 
+<!-- Deployment trigger -->
+
 A modern web application for discovering and voting on viral books from BookTok, built with Next.js 14, Supabase, and Stripe.
 
 ## Features
